@@ -3,8 +3,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>JSP - Hello World</title>
-    <link rel="stylesheet" href="css/index.css">
+
+    <title>Minihome</title>
+
+    <link rel="stylesheet" href="/css/index.css">
+
+    <script defer src="/js/minihome.js"></script>
+
 </head>
 <body>
 <div class="desk-wrapper">
@@ -23,7 +28,7 @@
                     <div class="menu-list">
                         <div class="menu-item active">홈</div>
                         <div class="menu-item">다이어리</div>
-                        <div class="menu-item">사진첩</div>
+                        <div class="menu-item" onclick="location.href='pic'">사진첩</div>
                         <div class="menu-item">방명록</div>
                     </div>
                 </div>
@@ -46,14 +51,11 @@
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
 
-<%--            <jsp:include page="${content}"></jsp:include>--%>
+            <jsp:include page="${content}"></jsp:include>
 
-            <iframe id="notebook-frame"
-                    src="/home-body"
-                    frameborder="0">
-            </iframe>
 
-        </div>
+
+                </div>
             </div>
         </div>
 
@@ -88,9 +90,7 @@
                 <!-- 화면: YouTube iframe -->
                 <div class="phone-screen">
                     <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
-                    <div id="yt-player">
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiYapiOg0bGxys9KbUX99TnjvcgYRuFd0TGA&s">
-                    </div>
+                    <div id="yt-player"></div>
 
                     <!-- 유튜브 바로가기 링크 -->
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
