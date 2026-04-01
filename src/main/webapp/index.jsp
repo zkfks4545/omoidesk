@@ -5,6 +5,7 @@
 <head>
     <title>JSP - Hello World</title>
     <link rel="stylesheet" href="css/index.css">
+    <script src="js/gusetboard.js"></script>
 </head>
 <body>
 <div class="desk-wrapper">

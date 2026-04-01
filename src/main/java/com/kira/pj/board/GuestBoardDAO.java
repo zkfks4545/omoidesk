@@ -29,12 +29,22 @@ public class GuestBoardDAO {
         ResultSet rs = null;
         try {
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm", Locale.KOREAN);
-
+            String gbDate = request.getParameter("date");
             con = DBManager.connect();
             request.setCharacterEncoding("utf-8");
-            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test order by created_at";
+
+            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test ";
+            if (gbDate != null && !gbDate.isEmpty()) {
+                sql += "where to_char(created_at, 'YYYY-MM-DD') = ? order by created_at desc";
+            }else{
+            sql += " order by created_at desc";
+            }
 
             ps = con.prepareStatement(sql);
+            if (gbDate != null && !gbDate.isEmpty()) {
+                ps.setString(1, gbDate);
+            }
+
             rs = ps.executeQuery();
             GuestBoardVO guestboard = null;
             ArrayList<GuestBoardVO> guestBoards = new ArrayList<>();
@@ -51,6 +61,7 @@ public class GuestBoardDAO {
             System.out.println("showGuestBoard success");
             System.out.println(guestBoards);
             request.setAttribute("guestBoards", guestBoards);
+            request.setAttribute("selectedDate",gbDate);
 
         }catch (Exception e){
             e.printStackTrace();

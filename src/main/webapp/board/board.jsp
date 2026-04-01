@@ -21,8 +21,16 @@
         <div class="post-item">
             <div class="post-header">
                 <span class="post-user">방명록</span>
-                <jsp:useBean id="now" class="java.util.Date"/>
-                <span class="post-date"><fmt:formatDate value="${now}" pattern="yyyy-MM-dd"/></span>
+                    <jsp:useBean id="now" class="java.util.Date"/>
+                <span class="post-date" onclick="ChoiceDay()" style="cursor:pointer;">
+                    <c:choose>
+                        <c:when test="${not empty selectedDate}">${selectedDate}</c:when>
+                        <c:otherwise>
+                            <fmt:formatDate value="${now}" pattern="yyyy-MM-dd"/>
+                        </c:otherwise>
+                    </c:choose>
+                </span>
+                <input type="date" id="datePicker" style="display:none;" onchange="sendDate(this.value)">
             </div>
             <div class="post-text">
                 <c:forEach items="${guestBoards}" var="gb">
@@ -41,7 +49,7 @@
 
     <form action="board" method="post">
         <div class="write-row">
-            <input class="write-input" placeholder="인사를 남겨주세요! ✏️" name="content" type="text"/>
+            <input class="write-input" autocomplete="off" placeholder="인사를 남겨주세요! ✏️" name="content" type="text"/>
             <button class="write-btn">남기기</button>
         </div>
     </form>
