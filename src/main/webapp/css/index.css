@@ -400,7 +400,7 @@ body::after {
     border: 1px solid #eee0d0;
     position: absolute;
     bottom: 20px;
-    width: 90%;
+    width: 1150px;
 
 }
 
@@ -440,6 +440,7 @@ body::after {
     background: #fff;
     border-radius: 8px;
     border: 1px solid #f0eee5;
+    width:1150px
 }
 
 .post-header {
