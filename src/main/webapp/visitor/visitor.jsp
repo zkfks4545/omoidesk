@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-=======
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
->>>>>>> 7cadccfc67644f98b27fba6008d0d24e2ebe2fb8
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html>
@@ -12,15 +8,6 @@
     <link rel="stylesheet" href="/css/index.css">
     <link href="https://fonts.googleapis.com/css2?family=Nanum+Pen+Script&family=Gaegu:wght@300;400;700&display=swap"
           rel="stylesheet">
-    <style>
-        /* iframe body는 투명하게, 부모 공책 배경과 자연스럽게 합쳐짐 */
-        html, body {
-            margin: 0;
-            padding: 0;
-            background: transparent;
-            overflow-x: hidden;
-        }
-    </style>
 </head>
 <body>
 
@@ -37,7 +24,6 @@
 </form>
 
 <div class="posts">
-<<<<<<< HEAD
 <c:choose>
     <c:when test="${empty visitorList}">
         <div class="post-item" style="text-align: center; color: #aaa09a; padding: 30px;">
@@ -118,7 +104,6 @@
             </c:otherwise>
         </c:choose>
 </c:choose>
-=======
     <c:choose>
         <c:when test="${empty visitorList}">
             <div class="post-item" style="text-align: center; color: #aaa09a; padding: 30px;">
@@ -141,4 +126,3 @@
 
 </body>
 </html>
->>>>>>> 7cadccfc67644f98b27fba6008d0d24e2ebe2fb8

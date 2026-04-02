@@ -1,4 +1,4 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <!DOCTYPE html>
 <html>
 <head>
@@ -22,7 +22,9 @@
         <div class="left-col">
             <div class="profile">
                 <div class="profile-card">
-                    <div class="profile-photo">🌬️</div>
+                    <div class="profile-photo">
+                        🌬️
+                    </div>
                     <div class="profile-name">DongMin</div>
                     <div class="profile-mood">
                         햇살 가득한 오후,<br/>기분 좋은 바람... 🍃<br/>
@@ -99,7 +101,10 @@
             <div class="mp3">
                 <div class="mp3-screen">
                     <div class="mp3-marquee">
-                        <span id="bgm-title" class="mp3-title-inner">
+                <%--클릭하면 음악 상세페이지로 이동--%>
+                        <span id="bgm-title" class="mp3-title-inner"
+                        data-src="/bgm?ajax=true"
+                        style="cursor: pointer;">
                             ♪ Hype Boy - NewJeans &nbsp;&nbsp;&nbsp;&nbsp;
                             ♪ Attention - NewJeans
                         </span>
@@ -123,16 +128,22 @@
             <div class="smartphone">
                 <div class="phone-camera"></div>
                 <!-- 화면: YouTube iframe -->
-                <div class="phone-screen">
+                <div class="phone-screen"
+                     data-src="/bgm?ajax=true"
+                style="cursor: pointer;">
                     <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
-                    <div id="yt-player"></div>
+                    <div id="yt-player">
+                        <img src="https://pbs.twimg.com/media/Gew2zMua8AAJoOM.jpg">
+                    </div>
                     <!-- 유튜브 바로가기 링크 -->
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
                         ▶ YouTube에서 보기
                     </a>
                 </div>
-                <!-- 홈버튼 -->
-                <div class="phone-home"></div>
+                <!-- 홈버튼 누르면 음악 상세페이지로 이동 -->
+                <div class="phone-home"
+                     data-src="/bgm?ajax=true"
+                    style="cursor: pointer"></div>
             </div>
 
             <%-- 방문자 보기도 iframe 방식으로 --%>
@@ -145,11 +156,11 @@
             </div>
         </div>
 
-<div class="postit">
-    오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
-    <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
-</div>
-</div>
+        <div class="postit">
+            오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
+            <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
+        </div>
+    </div>
 </div>
 <div class="desk-front"></div>
 </div>

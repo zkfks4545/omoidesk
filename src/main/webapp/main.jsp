@@ -4,6 +4,7 @@
 <html>
 <head>
     <link rel="stylesheet" href="/css/index.css">
+    <title></title>
 </head>
 <body style="margin: 0; padding: 0">
 
@@ -28,6 +29,6 @@
         </div>
     </div>
 
-
+</div>
 </body>
 </html>
