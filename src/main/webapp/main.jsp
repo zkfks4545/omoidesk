@@ -3,15 +3,11 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="/css/index.css">
+    <link rel="stylesheet" href="css/index.css">
 </head>
 <body style="margin:0; padding:0;">
 
-<body style="margin: 0; padding: 0">
-
 <div class="nb-body" style="min-height: 100vh;">
-
-<div class="nb-body">
     <div class="write-row">
         <input class="write-input" placeholder="지금 기분은 어때요? ✏️"/>
         <button class="write-btn">기록</button>
