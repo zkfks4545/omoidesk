@@ -3,14 +3,9 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-    <title>Minihome</title>
-
     <link rel="stylesheet" href="/css/index.css">
-
-    <script defer src="/js/minihome.js"></script>
-
 </head>
+<body style="margin:0; padding:0;">
 
 <body style="margin: 0; padding: 0">
 
@@ -37,6 +32,4 @@
 
 
 </body>
-
-
 </html>
