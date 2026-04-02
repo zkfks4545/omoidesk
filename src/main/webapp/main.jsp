@@ -14,7 +14,7 @@ pageEncoding="UTF-8"%>
   <body>
     <div class="nb-tabs">
       <div class="nb-tab active">홈</div>
-      <div class="nb-tab">다이어리</div>
+      <div class="nb-tab" onclick="location.href='diary'" >다이어리</div>
       <div class="nb-tab">사진첩</div>
       <div class="nb-tab">방명록</div>
     </div>

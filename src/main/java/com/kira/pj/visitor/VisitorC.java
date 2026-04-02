@@ -6,11 +6,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-<<<<<<< HEAD
-import java.io.PrintWriter;
-=======
 import java.util.List;
->>>>>>> 346a226d91db9fc645e11ff61daa105a65946d25
 
 @WebServlet(name = "VisitorC", value = "/visitor")
 public class VisitorC extends HttpServlet {

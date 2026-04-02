@@ -8,14 +8,15 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-@WebServlet(name = "DiaryC", value = "/diary")
+@WebServlet(value = "/diary")
 public class DiaryC extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 
+        System.out.println("다이어리");
         DiaryM.getCalendar(request);
-        request.setAttribute("content", "diary/calendar.jsp");
-        request.getRequestDispatcher("index.jsp").forward(request,response);
+        request.setAttribute("content", "diary/diary.jsp");
+        request.getRequestDispatcher("index.jsp").forward(request, response);
 
     }
 
