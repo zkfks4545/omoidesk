@@ -1,3 +1,4 @@
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8"%>
 <!DOCTYPE html>
 <html>
@@ -6,7 +7,6 @@
     <link rel="stylesheet" href="css/index.css">
     <script src="js/guestboard.js"></script>
     <link rel="stylesheet" href="css/visitor.css">
-    <script src="js/gusetboard.js"></script>
     <link rel="stylesheet" href="css/guestboard.css">
     <script src="js/diary.js"></script>
     <link rel="stylesheet" href="css/diary.css">
