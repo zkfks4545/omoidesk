@@ -5,7 +5,9 @@
 <head>
     <title>JSP - Hello World</title>
     <link rel="stylesheet" href="css/index.css">
+    <script src="js/guestboard.js"></script>
     <link rel="stylesheet" href="css/visitor.css">
+    <script src="js/gusetboard.js"></script>
     <link rel="stylesheet" href="css/guestboard.css">
     <%-- defer로 통일, 중복 스크립트 제거 --%>
     <script defer src="/js/minihome.js"></script>
@@ -109,13 +111,18 @@
             </div>
 
             <div class="smartphone">
+                <!-- 전면 카메라 -->
                 <div class="phone-camera"></div>
+                <!-- 화면: YouTube iframe -->
                 <div class="phone-screen">
+                    <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
                     <div id="yt-player"></div>
+                    <!-- 유튜브 바로가기 링크 -->
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
                         ▶ YouTube에서 보기
                     </a>
                 </div>
+                <!-- 홈버튼 -->
                 <div class="phone-home"></div>
             </div>
 
@@ -129,12 +136,13 @@
             </div>
         </div>
 
-        <div class="postit">
-            오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
-            <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
-        </div>
-    </div>
-    <div class="desk-front"></div>
+<div class="postit">
+    오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
+    <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
+</div>
+</div>
+</div>
+<div class="desk-front"></div>
 </div>
 
 <div id="yt-player-hidden" style="display:none;"></div>
