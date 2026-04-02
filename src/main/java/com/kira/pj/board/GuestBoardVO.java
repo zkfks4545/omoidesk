@@ -10,8 +10,11 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 public class GuestBoardVO {
+    public String gboard_pk;
+    public String guest_pk;
+    public String host_id;
     public String guest_nick;
     public String board_content;
     public int is_private;
-    public LocalDateTime created_at;
+    public String created_at;
 }

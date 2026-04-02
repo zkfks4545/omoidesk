@@ -1,0 +1,124 @@
+.vWrite-row {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #eee0d0;
+    position: absolute;
+    bottom: 20px;
+    width: 90%;
+    left: 3%;
+}
+/* 둥둥 떠다니는 애니메이션 */
+@keyframes floatingEmoji {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-5px) rotate(5deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+}
+
+.moving-emoji {
+    display: inline-block;
+    font-size: 22px;
+    animation: floatingEmoji 2s infinite ease-in-out;
+}
+
+/* 짝수번째 아이콘은 약간 다른 타이밍으로 움직이게 설정 */
+.post-item:nth-child(even) .moving-emoji {
+    animation-duration: 2.5s;
+    animation-delay: 0.5s;
+}
+/* 페이징 버튼 스타일 */
+.page-btn {
+    background: #ffffff;
+    border: 1px solid #f2c0bd;
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-family: 'Gaegu', cursive;
+    font-size: 14px;
+    color: #8a7a78;
+    cursor: pointer;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.05);
+}
+
+.page-btn:hover {
+    background: #fceae8;
+}
+
+/* 방문자 페이지일 때 공책 내부 여백 및 높이 제어 */
+.notebook.is-visitor .nb-body {
+    padding-bottom: 10px; /* 버튼이 너무 바닥에 붙지 않게 */
+    overflow-y: hidden;   /* 스크롤바 대신 페이징 사용 */
+}
+/* 방문자 위젯 전체 컨테이너 */
+.visitor-widget {
+    width: 180px;
+    background: #ffffff;
+    border: 1px solid #f2c0bd;
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: 3px 4px 10px rgba(180, 150, 140, 0.1);
+    position: relative;
+    margin-top: 10px;
+}
+
+/* 위젯 상단 타이틀 */
+.widget-title {
+    font-family: "Nanum Pen Script", cursive;
+    font-size: 18px;
+    color: #8a7a78;
+    border-bottom: 1px dashed #f2c0bd;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+}
+
+/* 최근 방문자 리스트 */
+.widget-list {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.widget-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #5a4a3a;
+    padding: 2px 0;
+}
+
+.w-name {
+    font-weight: bold;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 80px;
+}
+
+.w-date {
+    font-size: 11px;
+    color: #c0b0a0;
+}
+
+/* 하단 버튼 스타일 */
+.visitor-btn-wrap {
+    background: #fceae8;
+    border-radius: 8px;
+    padding: 6px;
+    text-align: center;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.visitor-btn-wrap:hover {
+    background: #f7cfcd;
+}
+
+.visitor-text {
+    font-family: "Nanum Pen Script", cursive;
+    font-size: 15px;
+    color: #8a7a78;
+    font-weight: bold;
+}

@@ -2,9 +2,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Minihome</title>
-    <link rel="stylesheet" href="/css/index.css">
+    <title>JSP - Hello World</title>
+    <link rel="stylesheet" href="css/index.css">
+    <script src="js/guestboard.js"></script>
+    <link rel="stylesheet" href="css/visitor.css">
+    <script src="js/gusetboard.js"></script>
+    <link rel="stylesheet" href="css/guestboard.css">
+    <%-- defer로 통일, 중복 스크립트 제거 --%>
     <script defer src="/js/minihome.js"></script>
+    <script src="js/diary.js"></script>
+    <link rel="stylesheet" href="css/diary.css">
 </head>
 
 <body>
@@ -19,15 +26,24 @@
                     <div class="profile-name">DongMin</div>
                     <div class="profile-mood">
                         햇살 가득한 오후,<br/>기분 좋은 바람... 🍃<br/>
-                        <span style="font-size:11px; color:#c0b0a0">since 2005</span>
+                        <span style="font-size: 11px; color: #c0b0a0">since 2005</span>
                     </div>
                 </div>
                 <div class="menu-card">
                     <div class="menu-list">
-                        <div class="menu-item active">홈</div>
-                        <div class="menu-item">다이어리</div>
-                        <div class="menu-item">사진첩</div>
-                        <div class="menu-item">방명록</div>
+                        <%-- data-src: 서블릿 경로 --%>
+                        <div class="menu-item ${content eq 'main.jsp' or empty content ? 'active' : ''}"
+                             data-src="/main?ajax=true">홈
+                        </div>
+                        <div class="menu-item ${content eq 'diary/diary.jsp' ? 'active' : ''}"
+                             data-src="/diary?ajax=true">다이어리
+                        </div>
+                        <div class="menu-item ${content eq 'pic/pic.jsp' ? 'active' : ''}"
+                             data-src="/pic?ajax=true">사진첩
+                        </div>
+                        <div class="menu-item ${content eq 'visitor/visitor.jsp' ? 'active' : ''}"
+                             data-src="/visitor?ajax=true">방명록
+                        </div>
                     </div>
                 </div>
             </div>
@@ -44,44 +60,35 @@
         </div>
         <%-- ══ /왼쪽 ══ --%>
 
-        <%-- ══ 가운데: 공책 ══ --%>
-        <div class="notebook">
-
+        <%-- is-visitor도 JS가 토글하므로 초기값만 EL로 설정 --%>
+        <div class="notebook ${content eq 'visitor/visitor.jsp' ? 'is-visitor' : ''}"
+             id="notebook">
             <div class="notebook-header">
                 <h2>📖 DongMin의 소소한 일상</h2>
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
 
             <div class="nb-tabs">
-                <div class="nb-tab active">홈</div>
-                <div class="nb-tab">다이어리</div>
-                <div class="nb-tab">사진첩</div>
-                <div class="nb-tab">방명록</div>
+                <div class="nb-tab ${content eq 'main.jsp' or empty content ? 'active' : ''}"
+                     data-src="/main?ajax=true">홈
+                </div>
+                <div class="nb-tab ${content eq 'diary/diary.jsp' ? 'active' : ''}"
+                     data-src="/diary?ajax=true">다이어리
+                </div>
+                <div class="nb-tab ${content eq 'photo/photo.jsp' ? 'active' : ''}"
+                     data-src="/photo?ajax=true">사진첩
+                </div>
+                <div class="nb-tab ${content eq 'visitor/visitor.jsp' ? 'active' : ''}"
+                     data-src="/visitor?ajax=true">방명록
+                </div>
             </div>
 
-            <iframe id="notebook-frame"
-                    src="/home-body"
-                    frameborder="0;">
-            </iframe>
-
-            <%--            <div class="nb-body">--%>
-            <%--                <div class="write-row">--%>
-            <%--                    <input class="write-input" placeholder="지금 기분은 어때요? ✏️"/>--%>
-            <%--                    <button class="write-btn">기록</button>--%>
-            <%--                </div>--%>
-
-            <%--                <div class="posts">--%>
-            <%--                    <div class="post-item">--%>
-            <%--                        <div class="post-header">--%>
-            <%--                            <span class="post-user">DongMin</span>--%>
-            <%--                            <span class="post-date">2026.03.31</span>--%>
-            <%--                        </div>--%>
-            <%--                        <div class="post-text">--%>
-            <%--                            기능 구현 준비 완료! 이 자리에 DB 데이터를 뿌려주세요. 😊--%>
-            <%--                        </div>--%>
-            <%--                    </div>--%>
-            <%--                </div>--%>
-            <%--            </div>--%>
+            <%-- ✅ 핵심 변경: jsp:include → iframe --%>
+            <iframe
+                    id="notebook-frame"
+                    src="${not empty content ? content : 'main.jsp'}"
+                    style="flex:1; width:100%; border:none; display:block; min-height:0;"
+            ></iframe>
         </div>
         <%-- ══ /가운데 ══ --%>
 
@@ -92,10 +99,9 @@
             <div class="mp3">
                 <div class="mp3-screen">
                     <div class="mp3-marquee">
-                        <span class="mp3-title-inner" id="bgm-title"
-                              style="cursor:pointer"
-                              onclick="location.href='/bgm'">
-                            ♪never gonna give you up - rick assley
+                        <span class="mp3-title-inner">
+                            ♪ Hype Boy - NewJeans &nbsp;&nbsp;&nbsp;&nbsp;
+                            ♪ Attention - NewJeans
                         </span>
                     </div>
                     <div class="mp3-controls-row">
@@ -116,42 +122,46 @@
             <%-- 스마트폰 (YouTube IFrame) --%>
             <div class="smartphone">
                 <div class="phone-camera"></div>
+                <!-- 화면: YouTube iframe -->
                 <div class="phone-screen">
-                    <div id="yt-player">
-                        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTiYapiOg0bGxys9KbUX99TnjvcgYRuFd0TGA&s">
-                    </div>
+                    <!-- YT IFrame API가 이 div를 iframe으로 교체 -->
+                    <div id="yt-player"></div>
+                    <!-- 유튜브 바로가기 링크 -->
                     <a id="yt-link" href="#" target="_blank" class="phone-yt-link">
                         ▶ YouTube에서 보기
                     </a>
                 </div>
+                <!-- 홈버튼 -->
                 <div class="phone-home"></div>
             </div>
 
-            <%-- 포스트잇 ← right-col 안에 있어야 함 --%>
-            <div class="postit">
-                오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
-                <span style="font-size:12px; color:#8a8030">— 2026.03.31</span>
+            <%-- 방문자 보기도 iframe 방식으로 --%>
+            <div class="visitor-btn-wrap"
+                 onclick="switchTab('/visitor?ajax=true')">
+                <div class="visitor-btn-card">
+                    <span class="visitor-icon">🐾</span>
+                    <span class="visitor-text">방문자 보기</span>
+                </div>
             </div>
-
         </div>
-        <%-- ══ /오른쪽 ══ --%>
 
-    </div><%-- /desk-surface --%>
-    <div class="desk-front"></div>
-</div><%-- /desk-wrapper --%>
+<div class="postit">
+    오늘도<br/>몽글몽글한<br/>하루 보내장🌤<br/>
+    <span style="font-size: 12px; color: #8a8030">— 2026.03.31</span>
+</div>
+</div>
+</div>
+<div class="desk-front"></div>
+</div>
 
-<%-- ══ BGM 스크립트 ══ --%>
 <div id="yt-player-hidden" style="display:none;"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="/js/music/player.js"></script>
 <script src="/js/music/router.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // 이 페이지 프로필 유저 ID로 BGM 로드
-        // 나중에 → loadPlaylist(${profileUser.id}) 로 교체
         loadPlaylist(1);
     });
 </script>
-
 </body>
 </html>
