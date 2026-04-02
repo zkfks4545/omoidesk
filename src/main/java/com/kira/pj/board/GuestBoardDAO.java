@@ -8,40 +8,60 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.time.format.DateTimeFormatter;
+import java.util.Locale;
 
 public class GuestBoardDAO {
     public static final GuestBoardDAO GBDAO = new GuestBoardDAO();
 
-    public Connection con = null;
+//    public Connection con = null;
 
     private GuestBoardDAO() {
         try {
-            con = DBManager.connect();
+//            con = DBManager.connect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
     public void showGuestBoard(HttpServletRequest request, HttpServletResponse response) {
+        Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
         try {
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd a hh:mm", Locale.KOREAN);
+            String gbDate = request.getParameter("date");
+            con = DBManager.connect();
             request.setCharacterEncoding("utf-8");
-            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test";
+
+            String sql = "select guest_nick, board_content, is_private, created_at from guestboard_test ";
+            if (gbDate != null && !gbDate.isEmpty()) {
+                sql += "where to_char(created_at, 'YYYY-MM-DD') = ? order by created_at desc";
+            }else{
+            sql += " order by created_at desc";
+            }
 
             ps = con.prepareStatement(sql);
+            if (gbDate != null && !gbDate.isEmpty()) {
+                ps.setString(1, gbDate);
+            }
+
             rs = ps.executeQuery();
-            GuestBoardVO guestboard = new GuestBoardVO();
+            GuestBoardVO guestboard = null;
             ArrayList<GuestBoardVO> guestBoards = new ArrayList<>();
             while (rs.next()) {
+                guestboard = new GuestBoardVO();
                 guestboard.setBoard_content(rs.getString("board_content"));
                 guestboard.setGuest_nick(rs.getString("guest_nick"));
                 guestboard.setIs_private(rs.getInt("is_private"));
-                guestboard.setCreated_at(rs.getTimestamp("created_at").toLocalDateTime());
+                String formattedDate = rs.getTimestamp("created_at").toLocalDateTime().format(formatter);
+                guestboard.setCreated_at(formattedDate);
                 guestBoards.add(guestboard);
             }
 
             System.out.println("showGuestBoard success");
-            request.setAttribute("guestBoard", guestBoards);
+            System.out.println(guestBoards);
+            request.setAttribute("guestBoards", guestBoards);
+            request.setAttribute("selectedDate",gbDate);
 
         }catch (Exception e){
             e.printStackTrace();
@@ -54,8 +74,10 @@ public class GuestBoardDAO {
     }
 
     public void addHi(HttpServletRequest request, HttpServletResponse response) {
+        Connection con = null;
         PreparedStatement ps = null;
         try {
+            con = DBManager.connect();
         request.setCharacterEncoding("utf-8");
 
 
@@ -67,7 +89,7 @@ public class GuestBoardDAO {
         String board_content = request.getParameter("content");
         int is_private = 0;
 
-        String sql = "insert into guestboard_test values(?,?,?,?,?,?,?,DEFAULT)";
+        String sql = "insert into guestboard_test values(?,?,?,?,?,?,DEFAULT)";
 
             ps = con.prepareStatement(sql);
             ps.setString(1,pk);

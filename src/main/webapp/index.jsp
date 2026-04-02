@@ -5,6 +5,9 @@
 <head>
     <title>JSP - Hello World</title>
     <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/visitor.css">
+    <script src="js/gusetboard.js"></script>
+    <link rel="stylesheet" href="css/guestboard.css">
 </head>
 <body>
 <div class="desk-wrapper">
@@ -40,18 +43,19 @@
             </div>
         </div>
 
-        <div class="notebook">
+        <div class="notebook ${content eq 'visitor/visitor.jsp' ? 'is-visitor' : ''}">
             <div class="notebook-header">
                 <h2>📖 DongMin의 소소한 일상</h2>
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
-
-            <jsp:include page="${content}"></jsp:include>
-
-
-
-                </div>
-            </div>
+            <c:choose>
+                <c:when test="${not empty content}">
+                    <jsp:include page="${content}"></jsp:include>
+                </c:when>
+                <c:otherwise>
+                    <jsp:include page="main.jsp"></jsp:include>
+                </c:otherwise>
+            </c:choose>
         </div>
     </div>
 </div>
@@ -99,12 +103,12 @@
         <!-- 홈버튼 -->
         <div class="phone-home"></div>
     </div>
-        <div class="visitor-btn-wrap" onclick="location.href='/visitor'">
-            <div class="visitor-btn-card">
-                <span class="visitor-icon">🐾</span>
-                <span class="visitor-text">방문자 보기</span>
-            </div>
+    <div class="visitor-btn-wrap" onclick="location.href='visitor'">
+        <div class="visitor-btn-card">
+            <span class="visitor-icon">🐾</span>
+            <span class="visitor-text">방문자 보기</span>
         </div>
+    </div>
 
 </div>
 
