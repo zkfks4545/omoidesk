@@ -6,7 +6,6 @@
     <link rel="stylesheet" href="css/index.css">
     <script src="js/guestboard.js"></script>
     <link rel="stylesheet" href="css/visitor.css">
-    <script src="js/guestboard.js"></script>
     <link rel="stylesheet" href="css/guestboard.css">
     <%-- defer로 통일, 중복 스크립트 제거 --%>
     <script defer src="/js/minihome.js"></script>
@@ -67,8 +66,8 @@
             </div>
 
             <div class="nb-tabs">
-                <div class="nb-tab ${content eq 'main.jsp' or empty content ? 'active' : ''}"
-                     data-src="/home-body?ajax=true">홈
+                <div class="nb-tab ${content eq 'main.jsp' ? 'active' : ''}"
+                     data-src="/home?ajax=true">홈
                 </div>
                 <div class="nb-tab ${content eq 'diary/diary.jsp' ? 'active' : ''}"
                      data-src="/diary?ajax=true">다이어리
