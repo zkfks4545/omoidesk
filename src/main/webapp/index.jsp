@@ -35,7 +35,7 @@
                         <div class="menu-item ${content eq 'diary/diary.jsp' ? 'active' : ''}"
                              data-src="/diary?ajax=true">다이어리
                         </div>
-                        <div class="menu-item ${content eq 'pic/pic.jsp' ? 'active' : ''}"
+                        <div class="menu-item ${content eq 'pic/photo.jsp' ? 'active' : ''}"
                              data-src="/pic?ajax=true">사진첩
                         </div>
                         <div class="menu-item ${content eq 'visitor/visitor.jsp' ? 'active' : ''}"
@@ -166,7 +166,7 @@
 <script src="/js/music/router.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        loadPlaylist(1); // 나중에 → loadPlaylist(${loginUser.id}) 로 교체
+        <%--loadPlaylist(1); // 나중에 → loadPlaylist(${loginUser.id}) 로 교체--%>
     });
 </script>
 </body>
