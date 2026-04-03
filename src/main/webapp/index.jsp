@@ -66,8 +66,8 @@
             </div>
 
             <div class="nb-tabs">
-                <div class="nb-tab ${content eq 'main.jsp' or empty content ? 'active' : ''}"
-                     data-src="/home-body?ajax=true">홈
+                <div class="nb-tab ${content eq 'main.jsp' ? 'active' : ''}"
+                     data-src="/home?ajax=true">홈
                 </div>
                 <div class="nb-tab ${content eq 'diary/diary.jsp' ? 'active' : ''}"
                      data-src="/diary?ajax=true">다이어리
