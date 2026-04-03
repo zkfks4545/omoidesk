@@ -10,12 +10,18 @@
 
 <%
     String msg = (String) request.getAttribute("msg");
+
+    if (msg == null) {
+        msg = (String) session.getAttribute("msg");
+    }
+
     if (msg != null) {
 %>
 <script>
     alert("<%= msg %>");
 </script>
 <%
+        session.removeAttribute("msg"); // ⭐ 한번 쓰고 삭제
     }
 %>
 

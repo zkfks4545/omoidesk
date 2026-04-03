@@ -470,4 +470,363 @@ public class UserDAO {
         HttpSession session = request.getSession();
         return session.getAttribute("loginUserId") != null;
     }
+
+    //아이디 찾기용 유지입력
+    private void keepFindIdFormData(HttpServletRequest request) {
+        String name = request.getParameter("name");
+        String email = request.getParameter("email");
+        String emailCode = request.getParameter("emailCode");
+        String emailVerified = request.getParameter("emailVerified");
+        String verifiedEmail = request.getParameter("verifiedEmail");
+
+        request.setAttribute("name", name);
+        request.setAttribute("email", email);
+        request.setAttribute("emailCode", emailCode);
+        request.setAttribute("emailVerified", emailVerified);
+        request.setAttribute("verifiedEmail", verifiedEmail);
+    }
+
+    // 이름+이메일로 아이디 찾기
+    public void findId(HttpServletRequest request) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            String name = request.getParameter("name");
+            String email = request.getParameter("email");
+            String emailVerified = request.getParameter("emailVerified");
+            String verifiedEmail = request.getParameter("verifiedEmail");
+
+            keepFindIdFormData(request);
+
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("msg", "이름을 입력해주세요.");
+                return;
+            }
+
+            if (email == null || email.trim().isEmpty()) {
+                request.setAttribute("msg", "이메일을 입력해주세요.");
+                return;
+            }
+
+            if (!"Y".equals(emailVerified) || verifiedEmail == null || !verifiedEmail.equals(email)) {
+                request.setAttribute("msg", "이메일 인증을 먼저 완료해주세요.");
+                return;
+            }
+
+            conn = DBManager.connect();
+
+            String sql = "select u_id from userReg where u_name = ? and u_email = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, name);
+            pstmt.setString(2, email);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                request.setAttribute("foundId", rs.getString("u_id"));
+                request.setAttribute("msg", "아이디를 찾았습니다.");
+            } else {
+                request.setAttribute("msg", "일치하는 회원정보가 없습니다.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "아이디 찾기 실패");
+        } finally {
+            DBManager.close(conn, pstmt, rs);
+        }
+    }
+
+    // 아이디 찾기용 이메일 인증번호 발송
+    public void sendFindIdEmailAuth(HttpServletRequest request) {
+        try {
+            String email = request.getParameter("email");
+
+            keepFindIdFormData(request);
+
+            if (email == null || email.trim().isEmpty()) {
+                request.setAttribute("msg", "이메일을 입력해주세요.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+                return;
+            }
+
+            email = email.trim();
+
+            if (!(email.endsWith("@gmail.com") || email.endsWith("@naver.com"))) {
+                request.setAttribute("msg", "구글 메일과 네이버 메일만 사용할 수 있습니다.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+                return;
+            }
+
+            String code = String.valueOf(100000 + new Random().nextInt(900000));
+
+            HttpSession session = request.getSession();
+            session.setAttribute("findIdEmailAuthCode", code);
+            session.setAttribute("findIdEmailAuthTarget", email);
+
+            sendMail(email, code);
+
+            request.setAttribute("msg", "인증번호를 이메일로 전송했습니다.");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "이메일 전송 실패");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+        }
+    }
+
+    //아이디 찾기용 이메일 인증 확인
+    public void checkFindIdEmailAuth(HttpServletRequest request) {
+        try {
+            String email = request.getParameter("email");
+            String emailCode = request.getParameter("emailCode");
+
+            keepFindIdFormData(request);
+
+            HttpSession session = request.getSession();
+            String sessionCode = (String) session.getAttribute("findIdEmailAuthCode");
+            String sessionEmail = (String) session.getAttribute("findIdEmailAuthTarget");
+
+            if (sessionCode != null && sessionEmail != null
+                    && sessionCode.equals(emailCode)
+                    && sessionEmail.equals(email)) {
+
+                request.setAttribute("msg", "이메일 인증이 완료되었습니다.");
+                request.setAttribute("emailVerified", "Y");
+                request.setAttribute("verifiedEmail", email);
+
+            } else {
+                request.setAttribute("msg", "인증번호가 일치하지 않습니다.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "이메일 인증 확인 실패");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+        }
+    }
+    // 비번 찾기 입력값 유지용
+    private void keepFindPwFormData(HttpServletRequest request) {
+        String id = request.getParameter("id");
+        String name = request.getParameter("name");
+        String email = request.getParameter("email");
+        String emailCode = request.getParameter("emailCode");
+        String emailVerified = request.getParameter("emailVerified");
+        String verifiedEmail = request.getParameter("verifiedEmail");
+
+        request.setAttribute("id", id);
+        request.setAttribute("name", name);
+        request.setAttribute("email", email);
+        request.setAttribute("emailCode", emailCode);
+        request.setAttribute("emailVerified", emailVerified);
+        request.setAttribute("verifiedEmail", verifiedEmail);
+    }
+    // 다음 버튼 눌렀을때 reset pw jsp 갈 수 있는지 검사용
+    public boolean goResetPwPage(HttpServletRequest request) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            String id = request.getParameter("id");
+            String name = request.getParameter("name");
+            String email = request.getParameter("email");
+            String emailVerified = request.getParameter("emailVerified");
+            String verifiedEmail = request.getParameter("verifiedEmail");
+
+            keepFindPwFormData(request);
+
+            if (id == null || id.trim().isEmpty()) {
+                request.setAttribute("msg", "아이디를 입력해주세요.");
+                return false;
+            }
+
+            if (name == null || name.trim().isEmpty()) {
+                request.setAttribute("msg", "이름을 입력해주세요.");
+                return false;
+            }
+
+            if (email == null || email.trim().isEmpty()) {
+                request.setAttribute("msg", "이메일을 입력해주세요.");
+                return false;
+            }
+
+            if (!"Y".equals(emailVerified) || verifiedEmail == null || !verifiedEmail.equals(email)) {
+                request.setAttribute("msg", "이메일 인증을 먼저 완료해주세요.");
+                return false;
+            }
+
+            conn = DBManager.connect();
+
+            String sql = "select * from userReg where u_id = ? and u_name = ? and u_email = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, id);
+            pstmt.setString(2, name);
+            pstmt.setString(3, email);
+
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                request.setAttribute("id", id);
+                request.setAttribute("name", name);
+                request.setAttribute("email", email);
+                return true;
+            } else {
+                request.setAttribute("msg", "일치하는 회원정보가 없습니다.");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "비밀번호 찾기 실패");
+            return false;
+        } finally {
+            DBManager.close(conn, pstmt, rs);
+        }
+    }
+    // 비밀번호 찾기용 인증번호 발송
+    public void sendFindPwEmailAuth(HttpServletRequest request) {
+        try {
+            String email = request.getParameter("email");
+
+            keepFindPwFormData(request);
+
+            if (email == null || email.trim().isEmpty()) {
+                request.setAttribute("msg", "이메일을 입력해주세요.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+                return;
+            }
+
+            email = email.trim();
+
+            if (!(email.endsWith("@gmail.com") || email.endsWith("@naver.com"))) {
+                request.setAttribute("msg", "구글 메일과 네이버 메일만 사용할 수 있습니다.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+                return;
+            }
+
+            String code = String.valueOf(100000 + new Random().nextInt(900000));
+
+            HttpSession session = request.getSession();
+            session.setAttribute("findPwEmailAuthCode", code);
+            session.setAttribute("findPwEmailAuthTarget", email);
+
+            sendMail(email, code);
+
+            request.setAttribute("msg", "인증번호를 이메일로 전송했습니다.");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "이메일 전송 실패");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+        }
+    }
+    // 비밀번호 찾기용 인증 확인
+    public void checkFindPwEmailAuth(HttpServletRequest request) {
+        try {
+            String email = request.getParameter("email");
+            String emailCode = request.getParameter("emailCode");
+
+            keepFindPwFormData(request);
+
+            HttpSession session = request.getSession();
+            String sessionCode = (String) session.getAttribute("findPwEmailAuthCode");
+            String sessionEmail = (String) session.getAttribute("findPwEmailAuthTarget");
+
+            if (sessionCode != null && sessionEmail != null
+                    && sessionCode.equals(emailCode)
+                    && sessionEmail.equals(email)) {
+
+                request.setAttribute("msg", "이메일 인증이 완료되었습니다.");
+                request.setAttribute("emailVerified", "Y");
+                request.setAttribute("verifiedEmail", email);
+
+            } else {
+                request.setAttribute("msg", "인증번호가 일치하지 않습니다.");
+                request.setAttribute("emailVerified", "N");
+                request.setAttribute("verifiedEmail", "");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "이메일 인증 확인 실패");
+            request.setAttribute("emailVerified", "N");
+            request.setAttribute("verifiedEmail", "");
+        }
+    }
+    // 새 비밀번호 변경
+    public boolean resetPassword(HttpServletRequest request) {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+
+        try {
+            String id = request.getParameter("id");
+            String name = request.getParameter("name");
+            String email = request.getParameter("email");
+            String newPw = request.getParameter("newPw");
+            String newPwChk = request.getParameter("newPwChk");
+
+            request.setAttribute("id", id);
+            request.setAttribute("name", name);
+            request.setAttribute("email", email);
+
+            if (newPw == null || newPw.trim().isEmpty()) {
+                request.setAttribute("msg", "새 비밀번호를 입력해주세요.");
+                return false;
+            }
+
+            if (newPwChk == null || newPwChk.trim().isEmpty()) {
+                request.setAttribute("msg", "새 비밀번호 확인을 입력해주세요.");
+                return false;
+            }
+
+            if (!newPw.equals(newPwChk)) {
+                request.setAttribute("msg", "새 비밀번호와 비밀번호 확인이 다릅니다.");
+                return false;
+            }
+
+            conn = DBManager.connect();
+
+            String sql = "update userReg set u_pw = ? where u_id = ? and u_name = ? and u_email = ?";
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setString(1, newPw);
+            pstmt.setString(2, id);
+            pstmt.setString(3, name);
+            pstmt.setString(4, email);
+
+            if (pstmt.executeUpdate() == 1) {
+                HttpSession session = request.getSession();
+                session.removeAttribute("findPwEmailAuthCode");
+                session.removeAttribute("findPwEmailAuthTarget");
+                request.setAttribute("msg", "비밀번호 변경 성공");
+                return true;
+            } else {
+                request.setAttribute("msg", "비밀번호 변경 실패");
+                return false;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("msg", "비밀번호 변경 실패");
+            return false;
+        } finally {
+            DBManager.close(conn, pstmt, null);
+        }
+    }
 }
+
