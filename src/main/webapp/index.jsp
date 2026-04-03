@@ -17,6 +17,8 @@
     <script src="js/guestboard.js"></script>
     <script src="js/diary.js"></script>
     <script src="js/index.js"></script>
+    <script src="js/visitor.js"></script>
+
 
     <title>Team Kira - Minihompy</title>
 </head>
@@ -74,7 +76,7 @@
             </div>
         </div>
 
-       
+
 
         <%-- ══ /가운데 ══ --%>
 
@@ -132,7 +134,7 @@
 
             <%-- 방문자 보기도 iframe 방식으로 --%>
             <div class="visitor-btn-wrap"
-                 onclick="switchTab('/visitor?ajax=true')">
+                 onclick="loadPage('visitor/visitor.jsp')">
                 <div class="visitor-btn-card">
                     <span class="visitor-icon">🐾</span>
                     <span class="visitor-text">방문자 보기</span>

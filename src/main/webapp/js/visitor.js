@@ -1,10 +1,7 @@
 // 현재 페이지 상태 저장
 let globalCurrentPage = 1;
 
-// 1. 페이지 로드 시 첫 페이지 데이터 불러오기
-document.addEventListener("DOMContentLoaded", () => {
-    fetchVisitors(1);
-});
+
 
 // 2. 방명록 작성 (POST 비동기)
 document.getElementById("visitorForm").addEventListener("submit", function (e) {

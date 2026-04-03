@@ -17,6 +17,3 @@
     </div>
 </div>
 
-<script src="/js/visitor.js">
-
-</script>
