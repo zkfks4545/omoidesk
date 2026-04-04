@@ -18,7 +18,7 @@
 }
 
 /* 1. 부모 영역: 공책의 하얀 종이 전체 */
-.gb-body {
+.gb-nb-body {
     display: flex;
     flex-direction: column;
     flex: 1;
@@ -39,11 +39,7 @@
     margin-bottom: 15px; /* 입력창과의 최소 간격 */
 }
 
-/* 3. 입력 폼 영역 (남기기 버튼 있는 곳) */
-.gbHi {
-    width: 100%;
-    flex-shrink: 0;     /* ⭐ 어떤 상황에도 작아지거나 밀려나지 않음 */
-}
+
 /* 1. 각 게시글 내용 줄을 가로로 정렬 */
 #gbContent {
     display: flex;             /* 가로 정렬 */
@@ -132,7 +128,6 @@
 .gb-write-row {
     display: flex;
     gap: 10px;
-    margin-top: auto;
     padding: 15px;
     background: #fff;
     border-radius: 8px;
@@ -162,4 +157,9 @@
     font-size: 13px;
     cursor: pointer;
     font-weight: bold;
+}
+.gb-write-form {
+    width: 100%;
+    flex-shrink: 0;      /* 폼이 찌그러지지 않게 방어 */
+    margin-top: auto;    /* ⭐ 핵심: 위에 내용이 없어도 폼 전체를 바닥으로 쫙 밀어버립니다! */
 }
