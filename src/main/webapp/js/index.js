@@ -78,19 +78,23 @@ function loadPage(url) {
 }
 
 // index.jsp 하단 script 부분 혹은 index.js
-document.querySelectorAll('.menu-item, .nb-tab').forEach(tab => {
-    tab.addEventListener('click', function () {
-        const target = this.getAttribute('data-src');
 
-        if (target.includes('diary')) {
-            loadDiary(); // 다이어리 비동기 로드 함수 호출
-        } else if (target.includes('board')) {
-            loadGuestBoard(); // f팀원분이 만든 방명록 함수 호출
-        } else if(target.includes('photo')){
-            loadPhoto();
-        }
-    });
-});
+//라우터맵 있으면 쓸필요없음? 아니면 index.jsp 에 data-src 가 .jsp가 아닌 경우를 위해 필요한가?
+
+// document.querySelectorAll('.menu-item, .nb-tab').forEach(tab => {
+//     tab.addEventListener('click', function () {
+//         const target = this.getAttribute('data-src');
+//
+//         if (target.includes('diary')) {
+//             loadDiary(); // 다이어리 비동기 로드 함수 호출
+//         } else if (target.includes('board')) {
+//             loadGuestBoard(); // f팀원분이 만든 방명록 함수 호출
+//         } else if(target.includes('photo')){
+//             loadPhoto();
+//         }
+//     });
+// });
+
 // ... 다른 메뉴 처리
 //=============================================================================================
 // 검색창 js 인데 수정할거 !!

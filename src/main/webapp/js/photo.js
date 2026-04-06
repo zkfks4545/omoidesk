@@ -1,42 +1,374 @@
+
+// function loadPhoto() {
+//     const container = document.getElementById('notebook-content');
+//
+//     // 1. 컨테이너 스크롤 설정 (중요!)
+//     // 부모 높이에 맞춰 스크롤이 생기도록 스타일 부여
+//     container.style.overflowY = 'auto';
+//     container.style.height = '100%'; // 또는 고정 px (예: 500px)
+//
+//     container.innerHTML = '<div class="loading" style="text-align:center; padding:20px;">사진첩을 열고 있어요... 📸</div>';
+//
+//     fetch('photo-data')
+//         .then(res => res.json())
+//         .then(data => {
+//             let photoHtml = `
+//                 <div class="photo-wrapper" style="padding:20px; font-family:'Gaegu', cursive;">
+//                     <h2 style="border-bottom:2px dashed #ddd; padding-bottom:10px; margin-bottom:20px;">
+//                         🖼️ My Photo Album
+//                     </h2>
+//                     <div class="photo-list" style="display:flex; flex-direction:column; gap:25px;">
+//             `;
+//
+//             data.forEach(item => {
+//                 photoHtml += `
+//                     <div class="photo-card" style="display:flex; background:#fff; border:1px solid #eee; border-radius:8px; box-shadow:3px 3px 10px rgba(0,0,0,0.05); overflow:hidden; height:180px;">
+//
+//                         <div class="photo-left" style="flex: 1.2; background:#f9f9f9;">
+//                             <img src="/uploads/${item.imgName}" style="width:100%; height:100%; object-fit:cover; display:block;">
+//                         </div>
+//
+//                         <div class="photo-right" style="flex: 2; padding:15px; display:flex; flex-direction:column; justify-content:space-between;">
+//
+//                             <div class="card-header" style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f5f5f5; padding-bottom:8px;">
+//                                 <span style="font-weight:bold; color:#333; font-size:16px;">👤 ${item.userId}</span>
+//                                 <span style="color:#999; font-size:12px;">📅 ${item.regDate}</span>
+//                             </div>
+//
+//                             <div class="card-body" style="margin-top:10px; flex-grow:1;">
+//                                 <div style="font-weight:bold; font-size:15px; margin-bottom:5px; color:#555;">${item.title}</div>
+//                                 <div style="font-size:14px; color:#777; line-height:1.4; word-break:break-all;">
+//                                     ${item.content}
+//                                 </div>
+//                             </div>
+//
+//                         </div>
+//                     </div>
+//                 `;
+//             });
+//
+//             photoHtml += `</div></div>`;
+//             container.innerHTML = photoHtml;
+//         })
+//         .catch(err => {
+//             container.innerHTML = '<div class="error" style="text-align:center; padding:20px;">사진첩 로딩 실패 ㅠㅠ</div>';
+//             console.error(err);
+//         });
+// }
+
+let photoData = [];
+
+// =============================================
+// 메인 로드
+// =============================================
 function loadPhoto() {
+    const container = document.getElementById('notebook-content');
+    container.style.overflowY = 'auto';
+    container.style.height = '100%';
+    container.innerHTML = '<div style="text-align:center; padding:20px;">사진첩을 열고 있어요... 📸</div>';
 
-const container = document.getElementById('notebook-content');
-    // 1. 일단 로딩 중 표시 (기존 내용 싹 비우기)
-    container.innerHTML = '<div class="loading">사진첩을 열고 있어요... 📸</div>';
-
-    // 2. 데이터 가져오기
     fetch('photo-data')
         .then(res => res.json())
         .then(data => {
-            // 3. 사진첩 전체 레이아웃을 백틱으로 감싸기
-            let photoHtml = `
-                <div class="photo-wrapper" style="padding:20px;">
-                    <h2 style="font-family:'Gaegu'; border-bottom:2px dashed #ddd; padding-bottom:10px;">
-                        🖼️ My Photo Album
-                    </h2>
-                    <div class="photo-grid" style="display:grid; grid-template-columns:repeat(3, 1fr); gap:15px; margin-top:20px;">
-            `;
-
-            // 4. 데이터 반복 돌면서 아이템 추가
-            data.forEach(item => {
-                photoHtml += `
-                    <div class="photo-card" style="background:#fff; padding:10px; border:1px solid #eee; box-shadow:5px 5px 15px rgba(0,0,0,0.05);">
-                        <img src="/uploads/${item.imgName}" style="width:100%; height:120px; object-fit:cover; border-radius:5px;">
-                        <div style="margin-top:8px; font-size:13px; text-align:center;">
-                            <strong>${item.title}</strong><br>
-                            <span style="color:#999; font-size:11px;">by ${item.userId}</span>
-                        </div>
-                    </div>
-                `;
-            });
-
-            photoHtml += `</div></div>`; // 닫는 태그
-
-            // 5. 한 방에 밀어넣기 (innerHTML)
-            container.innerHTML = photoHtml;
+            photoData = data;
+            renderFeedView(); // 통합된 피드 뷰 호출
         })
         .catch(err => {
-            container.innerHTML = '<div class="error">사진첩 로딩 실패 ㅠㅠ</div>';
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">사진첩 로딩 실패 ㅠㅠ</div>';
             console.error(err);
         });
+}
+
+// =============================================
+// [뷰 통합] 인스타그램식 피드 뷰 (Sticky 버그 수정)
+// =============================================
+function renderFeedView() {
+    const container = document.getElementById('notebook-content');
+
+    let html = `
+        <div style="
+            position:sticky; top:-15px; z-index:10;
+            margin : -20px -16px 0px -16px;
+            background:#fff; border-bottom:1px solid #eee;
+            padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
+            box-shadow:0 2px 6px rgba(0,0,0,0.06);">
+            
+            <h2 style="margin:0; font-size:18px; color:#333; font-family:'Gaegu', cursive;">🖼️ My Photo Album</h2>
+            
+            <button onclick="openAddModal()" style="
+                width:34px; height:34px; border-radius:50%;
+                border:2px solid #bbb; background:#fff;
+                font-size:20px; cursor:pointer; color:#666;
+                display:flex; align-items:center; justify-content:center;
+                box-shadow:2px 2px 6px rgba(0,0,0,0.1);"
+                onmouseover="this.style.background='#f0f0f0'"
+                onmouseout="this.style.background='#fff'">+</button>
+        </div>
+
+        <div style="font-family:'Gaegu', cursive; background:#f5f5f5; min-height:100%; padding-bottom:30px; padding-top:10px;">
+            <div style="display:flex; flex-direction:column; gap:0;">
+    `;
+
+    if (photoData.length === 0) {
+        html += `<div style="text-align:center; color:#bbb; padding:40px;">아직 사진이 없어요. + 버튼으로 추가해보세요!</div>`;
+    }
+
+    // 데이터를 돌면서 카드 추가
+    photoData.forEach((item, index) => {
+        html += buildFeedCard(item, index);
+    });
+
+    html += `</div></div>`; // 리스트 및 배경 닫는 태그
+
+    // 추가 모달 붙이기
+    html += buildAddModalHtml();
+
+    container.innerHTML = html;
+}
+
+// =============================================
+// 피드 카드 1장 빌더 (호버 아이콘 제거)
+// =============================================
+function buildFeedCard(item, index) {
+    return `
+    <div id="detail-card-${index}" style="
+        background:#fff; margin:12px 16px; border-radius:12px;
+        box-shadow:0 2px 12px rgba(0,0,0,0.08); overflow:hidden;">
+
+        <div style="
+            display:flex; justify-content:space-between; align-items:center;
+            padding:12px 16px; border-bottom:1px solid #f5f5f5;">
+            <span style="font-weight:bold; font-size:15px; color:#333;">👤 ${item.userId}</span>
+            <div style="display:flex; align-items:center; gap:12px;">
+                <span style="color:#bbb; font-size:12px;">📅 ${item.regDate}</span>
+                <button onclick="deletePhoto(${index})" style="
+                    background:none; border:none; font-size:18px;
+                    color:#ccc; cursor:pointer; line-height:1; padding:0;"
+                    onmouseover="this.style.color='#e55'"
+                    onmouseout="this.style.color='#ccc'">✕</button>
+            </div>
+        </div>
+
+        <div style="position:relative; cursor:pointer;" onclick="triggerImgEdit(${index})">
+            <img id="detail-img-${index}"
+                 src="${item.imgUrl || '/uploads/' + item.imgName}"
+                 style="width:100%; max-height:420px; object-fit:cover; display:block;">
+            
+            <input type="file" id="img-input-${index}" accept="image/*"
+                   style="display:none;" onchange="applyImgEdit(${index}, event)">
+        </div>
+
+        <div style="padding:16px;">
+
+            <div id="title-view-${index}"
+                 onclick="startEditTitle(${index})"
+                 style="font-weight:bold; font-size:16px; color:#444;
+                        margin-bottom:8px; cursor:text;
+                        border-radius:4px; padding:2px 4px;"
+                 onmouseover="this.style.background='#fafafa'"
+                 onmouseout="this.style.background='transparent'">
+                ${item.title}
+            </div>
+            <input id="title-input-${index}" type="text" value="${item.title}"
+                   style="display:none; width:100%; font-size:16px; font-weight:bold;
+                          font-family:'Gaegu'; border:1px solid #ddd; border-radius:6px;
+                          padding:6px 8px; box-sizing:border-box; margin-bottom:8px;"
+                   onblur="saveTitle(${index})"
+                   onkeydown="if(event.key==='Enter') this.blur()">
+
+            <div id="content-view-${index}"
+                 onclick="startEditContent(${index})"
+                 style="font-size:14px; color:#666; line-height:1.7;
+                        cursor:text; border-radius:4px; padding:2px 4px;
+                        min-height:40px; white-space:pre-wrap;"
+                 onmouseover="this.style.background='#fafafa'"
+                 onmouseout="this.style.background='transparent'">
+                ${item.content}
+            </div>
+            <textarea id="content-input-${index}"
+                      style="display:none; width:100%; font-size:14px; color:#666;
+                             font-family:'Gaegu'; border:1px solid #ddd; border-radius:6px;
+                             padding:6px 8px; box-sizing:border-box; resize:none; line-height:1.7;"
+                      rows="4"
+                      onblur="saveContent(${index})">${item.content}</textarea>
+
+        </div>
+    </div>
+    `;
+}
+// =============================================
+// 인라인 편집: 제목
+// =============================================
+function startEditTitle(index) {
+    document.getElementById(`title-view-${index}`).style.display = 'none';
+    const input = document.getElementById(`title-input-${index}`);
+    input.style.display = 'block';
+    input.focus();
+    input.select();
+}
+
+function saveTitle(index) {
+    const newVal = document.getElementById(`title-input-${index}`).value.trim();
+    if (newVal) photoData[index].title = newVal;
+    document.getElementById(`title-input-${index}`).style.display = 'none';
+    const view = document.getElementById(`title-view-${index}`);
+    view.textContent = photoData[index].title;
+    view.style.display = 'block';
+}
+
+// =============================================
+// 인라인 편집: 내용
+// =============================================
+function startEditContent(index) {
+    document.getElementById(`content-view-${index}`).style.display = 'none';
+    const ta = document.getElementById(`content-input-${index}`);
+    ta.style.display = 'block';
+    ta.style.height = 'auto';
+    ta.style.height = ta.scrollHeight + 'px';
+    ta.focus();
+}
+
+function saveContent(index) {
+    const newVal = document.getElementById(`content-input-${index}`).value.trim();
+    if (newVal) photoData[index].content = newVal;
+    document.getElementById(`content-input-${index}`).style.display = 'none';
+    const view = document.getElementById(`content-view-${index}`);
+    view.textContent = photoData[index].content;
+    view.style.display = 'block';
+}
+
+// =============================================
+// 이미지 수정
+// =============================================
+function triggerImgEdit(index) {
+    document.getElementById(`img-input-${index}`).click();
+}
+
+function applyImgEdit(index, event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const newUrl = URL.createObjectURL(file);
+    photoData[index].imgUrl  = newUrl;
+    photoData[index].imgName = file.name;
+    document.getElementById(`detail-img-${index}`).src = newUrl;
+}
+
+// =============================================
+// 삭제
+// =============================================
+function deletePhoto(index) {
+    if (!confirm('이 게시글을 삭제할까요?')) return;
+
+    // 배열에서 해당 항목 삭제
+    photoData.splice(index, 1);
+
+    // TODO: DB 연동 시 → fetch('photo-delete?id=...', { method:'DELETE' })
+
+    // 삭제 후 피드 다시 그리기
+    renderFeedView();
+}
+
+// =============================================
+// 추가 모달
+// =============================================
+function buildAddModalHtml() {
+    return `
+    <div id="addModal" style="
+        display:none; position:fixed; inset:0;
+        background:rgba(0,0,0,0.45); z-index:1000;
+        justify-content:center; align-items:center;">
+
+        <div style="
+            background:#fff; border-radius:14px; padding:28px;
+            width:400px; max-width:90%;
+            box-shadow:0 8px 30px rgba(0,0,0,0.18);
+            font-family:'Gaegu', cursive;">
+
+            <h3 style="margin:0 0 18px; font-size:18px;
+                        border-bottom:2px dashed #ddd; padding-bottom:10px;">
+                📷 새 사진 추가
+            </h3>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-size:14px; color:#555; display:block; margin-bottom:6px;">사진 선택</label>
+                <input type="file" id="addImgFile" accept="image/*"
+                       onchange="previewAddImage(event)" style="font-size:13px; width:100%;">
+                <img id="addImgPreview" src="" alt="" style="
+                    display:none; margin-top:10px; width:100%; max-height:160px;
+                    object-fit:cover; border-radius:8px; border:1px solid #eee;">
+            </div>
+
+            <div style="margin-bottom:14px;">
+                <label style="font-size:14px; color:#555; display:block; margin-bottom:6px;">제목</label>
+                <input type="text" id="addTitle" placeholder="제목을 입력하세요" style="
+                    width:100%; padding:8px 10px; font-size:14px; font-family:'Gaegu';
+                    border:1px solid #ddd; border-radius:6px; box-sizing:border-box;">
+            </div>
+
+            <div style="margin-bottom:22px;">
+                <label style="font-size:14px; color:#555; display:block; margin-bottom:6px;">내용</label>
+                <textarea id="addContent" placeholder="내용을 입력하세요" rows="3" style="
+                    width:100%; padding:8px 10px; font-size:14px; font-family:'Gaegu';
+                    border:1px solid #ddd; border-radius:6px; resize:none; box-sizing:border-box;"></textarea>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="closeAddModal()" style="
+                    padding:8px 18px; border:1px solid #ccc; border-radius:6px;
+                    background:#f5f5f5; cursor:pointer; font-family:'Gaegu'; font-size:14px;">
+                    취소
+                </button>
+                <button onclick="submitAddPhoto()" style="
+                    padding:8px 20px; border:none; border-radius:6px;
+                    background:#555; color:#fff; cursor:pointer;
+                    font-family:'Gaegu'; font-size:14px;">
+                    추가하기
+                </button>
+            </div>
+        </div>
+    </div>`;
+}
+
+function openAddModal() {
+    document.getElementById('addModal').style.display = 'flex';
+}
+
+function closeAddModal() {
+    document.getElementById('addModal').style.display = 'none';
+    document.getElementById('addTitle').value = '';
+    document.getElementById('addContent').value = '';
+    document.getElementById('addImgFile').value = '';
+    document.getElementById('addImgPreview').style.display = 'none';
+}
+
+function previewAddImage(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const preview = document.getElementById('addImgPreview');
+    preview.src = URL.createObjectURL(file);
+    preview.style.display = 'block';
+}
+
+function submitAddPhoto() {
+    const title   = document.getElementById('addTitle').value.trim();
+    const content = document.getElementById('addContent').value.trim();
+    const file    = document.getElementById('addImgFile').files[0];
+
+    if (!title || !content || !file) {
+        alert('사진, 제목, 내용을 모두 입력해주세요!');
+        return;
+    }
+
+    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
+    photoData.unshift({
+        userId:  'me',
+        imgUrl:  URL.createObjectURL(file),
+        imgName: file.name,
+        title,
+        content,
+        regDate: today
+    });
+
+    closeAddModal();
+    renderFeedView(); // 추가 후 피드 다시 그리기
 }
