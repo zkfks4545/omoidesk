@@ -7,7 +7,7 @@ import java.io.IOException;
 import java.util.List;
 import com.google.gson.Gson;
 
-@WebServlet(name = "BgmServlet", value = "/api/bgm")
+@WebServlet(name = "BgmServlet", value = "/bgm")
 public class BgmServlet extends HttpServlet {
 
     @Override
@@ -17,8 +17,8 @@ public class BgmServlet extends HttpServlet {
         // userId 파라미터 받기 (없으면 기본값 1)
         String userIdStr = request.getParameter("userId");
         int userId = (userIdStr == null) ? 1 : Integer.parseInt(userIdStr);
-
-        List<BgmTrackVO> tracks = new BgmDAO().getTracksByUser(userId);
+        String userId2 = userId + "";
+        List<BgmTrackVO> tracks = new BgmDAO().getTracksByUser(userId2);
 
         response.setContentType("application/json; charset=UTF-8");
         new Gson().toJson(tracks, response.getWriter());
