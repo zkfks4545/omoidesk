@@ -1,90 +1,90 @@
+<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
-<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>JSP - Hello World</title>
-</head>
-<body>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>JSP - Hello World</title>
-</head>
-<body>
+
 <div class="diary-container">
-    <%-- [1] 달력 영역: 다이어리 버튼 누르면 가장 먼저 보이는 곳 --%>
-    <div class="calendar-wrap">
-        <table class="calendar-table">
-            <thead>
-            <tr>
-                <th class="sun">SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th class="sat">SAT</th>
-            </tr>
-            </thead>
-            <tbody>
-            <tr>
-                <c:forEach var="i" begin="1" end="${startDay - 1}">
-                    <td></td>
-                </c:forEach>
-
-                <c:forEach var="d" begin="1" end="${lastDay}">
-                <td class="${(d + startDay - 1) % 7 == 1 ? 'sun' : ((d + startDay - 1) % 7 == 0 ? 'sat' : '')}">
-                        <%-- 날짜를 클릭하면 해당 날짜 d를 파라미터로 다시 서블릿을 부릅니다 --%>
-                    <a href="diary?d=${d}">${d}</a>
-                </td>
-                <c:if test="${(d + startDay - 1) % 7 == 0}">
-            </tr><tr>
-                </c:if>
-                </c:forEach>
-            </tr>
-            </tbody>
-        </table>
-    </div>
-
-    <%--
-        [2] 게시판 영역:
-        핵심!! selectedDay가 비어있지 않을 때(즉, 날짜를 클릭했을 때)만 아래 내용이 나타납니다.
-    --%>
-    <c:if test="${not empty selectedDay}">
-        <hr class="diary-hr">
-
-        <div class="diary-board">
-            <div class="board-header">
-                <h3>📅 ${selectedDay}일의 일기</h3>
-                    <%-- 일기쓰기 버튼 --%>
-                <button onclick="showWriteForm()" class="write-btn">일기쓰기</button>
-            </div>
-
-                <%-- 게시글 작성 폼 (일기쓰기 버튼을 눌러야 showWriteForm()에 의해 나타남) --%>
-            <form action="diary.write" method="post" id="writeForm" style="display:none;" class="write-row">
-                <input type="hidden" name="d_date" value="${selectedDay}">
-                <input name="d_title" placeholder="제목" class="write-input" required>
-                <textarea name="d_txt" placeholder="오늘의 추억..." class="write-input" required></textarea>
-                <div style="text-align: right;">
-                    <button class="write-btn">등록</button>
+    <c:choose>
+        <%-- [1] 글쓰기 버튼을 눌렀을 때 나오는 화면 --%>
+        <c:when test="${showMode == 'write'}">
+            <div class="diary-board">
+                <div class="board-header">
+                    <h3>✍️ ${curYear}.${curMonth}.${selectedDay} 일기 쓰기</h3>
+                        <%-- 취소를 누르면 뒤로 튕기는 게 아니라 다시 비동기로 달력 화면을 부릅니다 --%>
+                    <button onclick="loadDiary('diary?y=${curYear}&m=${curMonth}&d=${selectedDay}')" class="write-btn">취소</button>
                 </div>
-            </form>
 
-                <%-- 게시판 목록 --%>
-            <div class="posts">
-                <c:forEach var="p" items="${posts}">
-                    <div class="post-item">
-                        <div class="post-header">
-                                <%-- DB 연동 전이라면 p.d_title 대신 그냥 p로 출력될 수 있음 --%>
-                            <span class="post-user">${p}</span>
-                            <span class="post-date">2026.04.02</span>
-                        </div>
-                        <div class="post-text">임시 데이터입니다. DB 연동 후 내용이 표시됩니다.</div>
-                        <div class="post-btns">
-                            <a href="#">삭제</a>
-                        </div>
-                    </div>
-                </c:forEach>
+                <form action="diary.write" method="post" style="display: flex; flex-direction: column; gap: 15px;">
+                    <input type="hidden" name="d_year" value="${curYear}">
+                    <input type="hidden" name="d_month" value="${curMonth}">
+                    <input type="hidden" name="d_date" value="${selectedDay}">
+
+                    <input name="d_title" placeholder="제목을 입력하세요" style="width:100%; padding:15px; border:none; border-bottom:2px solid #f7cfcd; font-family:'Gaegu'; font-size:22px; outline:none; box-sizing: border-box;">
+
+                        <%-- 💡 나중에 이 부분을 지우고 네이버 스마트 에디터를 넣으시면 됩니다! --%>
+                    <textarea name="d_txt" placeholder="내용을 입력하세요..." style="width:100%; height:250px; border:none; padding:15px; font-family:'Gaegu'; font-size:20px; outline:none; resize:none; box-sizing: border-box;"></textarea>
+
+                    <div style="text-align:right;"><button class="write-btn">등록하기</button></div>
+                </form>
             </div>
-        </div>
-    </c:if>
+        </c:when>
+
+        <%-- [2] 기본 달력 화면 --%>
+        <c:otherwise>
+            <div class="calendar-header">
+                    <%-- 화살표도 비동기 로드(loadDiary)로 이동하게 수정 --%>
+                <a href="javascript:void(0);" onclick="loadDiary('diary?y=${prevYear}&m=${prevMonth}')" class="cal-btn">◀</a>
+                <span class="cal-title">${curYear}. ${curMonth < 10 ? '0' : ''}${curMonth}</span>
+                <a href="javascript:void(0);" onclick="loadDiary('diary?y=${nextYear}&m=${nextMonth}')" class="cal-btn">▶</a>
+            </div>
+
+            <div class="calendar-wrap">
+                <table class="calendar-table">
+                    <thead>
+                    <tr><th class="sun">SUN</th><th>MON</th><th>TUE</th><th>WED</th><th>THU</th><th>FRI</th><th class="sat">SAT</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr>
+                        <c:if test="${startDay > 1}">
+                            <c:forEach var="i" begin="1" end="${startDay - 1}"><td></td></c:forEach>
+                        </c:if>
+
+                        <c:forEach var="d" begin="1" end="${lastDay}">
+                        <td class="${(d + startDay - 1) % 7 == 1 ? 'sun' : ((d + startDay - 1) % 7 == 0 ? 'sat' : '')}">
+                                <%-- ★ 핵심: 날짜를 누르면 일반 이동이 아니라 비동기(fetch) 함수 실행! --%>
+                            <a href="javascript:void(0);" onclick="loadDiary('diary?y=${curYear}&m=${curMonth}&d=${d}')">${d}</a>
+                        </td>
+                        <c:if test="${(d + startDay - 1) % 7 == 0 && d < lastDay}">
+                    </tr><tr>
+                        </c:if>
+                        </c:forEach>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <%-- [3] 특정 날짜를 눌렀을 때만 나타나는 일기 목록 & 글쓰기 버튼 --%>
+            <c:if test="${showMode == 'list'}">
+                <div class="diary-board">
+                    <div class="board-header">
+                        <h3>📅 ${selectedDay}일의 일기</h3>
+                            <%-- 글쓰기 버튼 누르면 글쓰기 모드로 비동기 전환 --%>
+                        <button onclick="loadDiary('diary?y=${curYear}&m=${curMonth}&d=${selectedDay}&mode=write')" class="write-btn">일기쓰기</button>
+                    </div>
+
+                    <div class="posts">
+                        <c:forEach var="p" items="${posts}">
+                            <div class="post-item">
+                                <div style="display:flex; justify-content:space-between; border-bottom:1px dashed #eee; padding-bottom:10px; margin-bottom:10px;">
+                                    <span style="font-weight:bold; font-size:22px; color:#555;">${p}</span>
+                                    <span style="font-size:14px; color:#bbb;">${curYear}.${curMonth}.${selectedDay}</span>
+                                </div>
+                                <div style="font-size:18px; color:#666; line-height:1.6;">
+                                    오늘의 일기 본문 내용입니다.
+                                </div>
+                            </div>
+                        </c:forEach>
+                    </div>
+                </div>
+            </c:if>
+        </c:otherwise>
+    </c:choose>
 </div>
-</body>
-</html>
-</body>
-</html>
