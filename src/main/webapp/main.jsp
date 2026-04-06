@@ -1,4 +1,5 @@
-<%@ page language="java" contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ page language="java" contentType="text/html; charset=UTF-8"
+pageEncoding="UTF-8" %>
 
 <!DOCTYPE html>
 <html>
@@ -15,6 +16,10 @@
                 <span id="status-text">요즘 코딩이 제일 재밌어요! 💻✨</span>
                 <button onclick="editStatus()" class="status-edit-btn">[수정]</button>
             </div>
+            <div class="post-text">
+              기능 구현 준비 완료! 이 자리에 DB 데이터를 뿌려주세요. 😊
+            </div>
+          </div>
         </div>
         <span class="status-since">Since 2026.03.31</span>
     </div>
