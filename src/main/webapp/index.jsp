@@ -8,6 +8,7 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
     <%-- CSS --%>
+<<<<<<< HEAD
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/index.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/visitor.css">
     <link rel="stylesheet" href="${pageContext.request.contextPath}/css/guestboard.css">
@@ -21,6 +22,22 @@
 
     <script defer src="${pageContext.request.contextPath}/js/minihome.js"></script>
     <script defer src="${pageContext.request.contextPath}/js/ajax.js"></script>
+=======
+    <link rel="stylesheet" href="css/index.css">
+    <link rel="stylesheet" href="css/visitor.css">
+    <link rel="stylesheet" href="css/guestboard.css">
+    <link rel="stylesheet" href="css/diary.css">
+    <link rel="stylesheet" href="css/main.css">
+
+    <%-- JS --%>
+    <script src="js/guestboard.js"></script>
+    <script src="js/diary.js"></script>
+    <script src="js/index.js"></script>
+    <script src="js/visitor.js"></script>
+    <script defer src="/js/minihome.js"></script>
+    <script defer src="/js/ajax.js"></script>
+    <script defer src="js/main.js"></script>
+>>>>>>> a586b6dfa02dd4b7e4c7a3c664ae960647f74b14
 
     <title>Team Kira - Minihompy</title>
 </head>
@@ -74,6 +91,12 @@
              id="notebook">
             <div class="notebook-header">
                 <h2>📖 Team Kira의 소소한 일상</h2>
+                <div class="mini-search-wrapper">
+                    <input type="text" id="live-search-input" placeholder="이름, 닉네임 검색 🌊" autocomplete="off">
+                    <span class="search-icon">🔍</span>
+
+                    <div id="search-dropdown" class="search-dropdown hidden"></div>
+                </div>
                 <div class="visitor">Today 15 | Total 1,234</div>
             </div>
 
