@@ -18,10 +18,10 @@ public class BgmServlet extends HttpServlet {
         String userIdStr = request.getParameter("userId");
         int userId = (userIdStr == null) ? 1 : Integer.parseInt(userIdStr);
 
-        List<BgmTrackVO> tracks = new BgmDAO().getTracksByUser(userId);
+//        List<BgmTrackVO> tracks = new BgmDAO().getTracksByUser(userId);
 
         response.setContentType("application/json; charset=UTF-8");
-        new Gson().toJson(tracks, response.getWriter());
+//        new Gson().toJson(tracks, response.getWriter());
     }
 
     public void destroy() {
