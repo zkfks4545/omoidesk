@@ -43,7 +43,7 @@
             <div class="profile">
                 <div class="profile-card">
                     <div class="profile-photo">🌬️</div>
-                    <div class="profile-name">DongMin</div>
+                    <div class="profile-name">${sessionScope.loginUserNickname}</div>
                     <div class="profile-mood">
                         햇살 가득한 오후,<br/>기분 좋은 바람... 🍃<br/>
                         <span style="font-size: 11px; color: #c0b0a0">since 2005</span>
