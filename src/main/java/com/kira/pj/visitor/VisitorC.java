@@ -57,36 +57,39 @@ public class VisitorC extends HttpServlet {
         }
     }
 
+    // ... (전략) ...
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
         request.setCharacterEncoding("UTF-8");
 
-        // 1. 프론트엔드에서 URLSearchParams로 보낸 데이터 추출
         String visitorName = request.getParameter("visitorName");
         String visitorEmojiStr = request.getParameter("visitorEmoji");
         String ownerId = request.getParameter("ownerId");
 
-        // 2. 파라미터 누락 방지 (유효성 검증)
+        // [추가] 클라이언트의 IP 주소 추출
+        // 로드밸런서나 프록시 환경(Nginx 등)을 거쳐올 경우 X-Forwarded-For 헤더를 확인해야 함
+        String clientIp = request.getHeader("X-Forwarded-For");
+        if (clientIp == null || clientIp.isEmpty() || "unknown".equalsIgnoreCase(clientIp)) {
+            clientIp = request.getRemoteAddr();
+        }
+
         if (visitorName != null && !visitorName.trim().isEmpty() &&
                 visitorEmojiStr != null && ownerId != null) {
 
             try {
-                // 3. String으로 넘어온 이모지 값을 int로 형변환
                 int emojiInt = Integer.parseInt(visitorEmojiStr);
 
                 VisitorDTO dto = new VisitorDTO();
                 dto.setV_writer_id(visitorName.trim());
                 dto.setV_owner_id(ownerId);
                 dto.setV_emoji(emojiInt);
+                dto.setV_ip(clientIp); // [추가] DTO에 IP 세팅
 
                 VisitorDAO dao = new VisitorDAO();
-
-                // 4. 기존 insertVisitor가 아닌 upsertVisitor 호출
                 int result = dao.upsertVisitor(dto);
 
-                // 5. DB 반영 결과에 따른 응답 분기
                 if (result > 0) {
                     response.setStatus(HttpServletResponse.SC_OK);
                     response.getWriter().print("success");
@@ -94,19 +97,11 @@ public class VisitorC extends HttpServlet {
                     response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
                 }
 
-            } catch (NumberFormatException e) {
-                // 이모지 값이 숫자가 아닌 문자로 넘어왔을 때의 예외 처리
-                System.err.println("이모지 파라미터 변환 오류: " + e.getMessage());
-                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-
             } catch (Exception e) {
-                // DB 연결 실패 또는 MERGE INTO 구문 에러 시 클라이언트에 서버 에러 반환
-                System.err.println("방명록 Upsert DB 처리 중 오류: " + e.getMessage());
+                e.printStackTrace();
                 response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
             }
         } else {
-            // 필수 파라미터가 비어있을 때
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-    }
-}
+    }}
