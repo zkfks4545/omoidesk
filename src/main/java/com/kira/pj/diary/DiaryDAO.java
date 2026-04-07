@@ -4,9 +4,11 @@ import com.kira.pj.main.DBManager;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import javax.servlet.http.HttpServletRequest;
 
 public class DiaryDAO {
@@ -15,12 +17,9 @@ public class DiaryDAO {
     public static final DiaryDAO DDAO = new DiaryDAO();
     public Connection con = null;
     private DiaryDAO() {
-        try {
-            con = DBManager.connect();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+
     }
+    private  ArrayList<DiaryDTO> diaries;
 
     public void getCalendar(HttpServletRequest req) {
 
@@ -78,8 +77,49 @@ public class DiaryDAO {
         }
     }
 
+    // 전체조회
+    public void selectAllDiary(HttpServletRequest req) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        String sql = "SELECT * FROM diary_test ORDER BY d_date DESC";
+        ArrayList<DiaryDTO> diaries = new ArrayList<>();
+        try {
+            con = DBManager.connect();
+            pstmt = con.prepareStatement(sql);
+            rs = pstmt.executeQuery();
+
+            // 자바에서 날짜를 예쁘게 바꿔줄 도구 준비
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+
+            while (rs.next()) {
+                DiaryDTO dto = new DiaryDTO();
+                dto.setD_no(rs.getInt("d_no"));
+                dto.setD_id(rs.getString("d_id"));
+
+                // ★ 핵심: DB에서 원본 DATE를 꺼낸 다음, 자바가 문자열로 예쁘게 바꿈!
+                java.sql.Date dbDate = rs.getDate("d_date");
+                String formattedDate = sdf.format(dbDate);
+                dto.setD_date(formattedDate); // DTO에는 String으로 쏙 들어감
+
+                dto.setD_title(rs.getString("d_title"));
+                dto.setD_txt(rs.getString("d_txt"));
+
+                diaries.add(dto);
+            }
+            System.out.println(diaries);
+            req.setAttribute("diaries", diaries);
+
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            DBManager.close(con, pstmt, rs);
+        }
+    }
+
         // 일기 등록 기능 (Create)
-        public static void insertDiary(HttpServletRequest req) {
+        public void insertDiary(HttpServletRequest req) {
             Connection con = null;
             PreparedStatement pstmt = null;
             String sql = "insert into diary_test values (diary_seq.nextval, ?, ?, ?, ?, SYSDATE)";
@@ -104,7 +144,7 @@ public class DiaryDAO {
 
 
                 // 5. 빈칸(?)에 데이터 쏙쏙 채워 넣기
-                pstmt.setString(1, "DongMin"); // 나중에 로그인한 사람 아이디로 바꾸면 됩니다!
+                pstmt.setString(1, id); // 나중에 로그인한 사람 아이디로 바꾸면 됩니다!
                 pstmt.setString(2, fullDate);
                 pstmt.setString(3, title);
                 pstmt.setString(4, txt);
@@ -122,6 +162,7 @@ public class DiaryDAO {
             }
         }
     }
+
 
 
 
