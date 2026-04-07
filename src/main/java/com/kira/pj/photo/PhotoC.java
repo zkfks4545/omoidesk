@@ -1,5 +1,7 @@
 package com.kira.pj.photo;
 
+import com.kira.pj.main.SupabaseModel;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -18,7 +20,8 @@ public class PhotoC extends HttpServlet {
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-
+//        SupabaseModel.uploadSupabase(request);
+        response.getWriter().println(PhotoDAO.PDAO.updatePhoto(request));
     }
 
     public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {

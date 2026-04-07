@@ -31,7 +31,7 @@ function renderFeedView() {
     let html = `
         <div style="
             position:sticky; top:-15px; z-index:10;
-            margin : -20px -16px 0px -16px;
+            /*margin : -20px -16px 0px -16px;*/
             background:#fff; border-bottom:1px solid #eee;
             padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
             box-shadow:0 2px 6px rgba(0,0,0,0.06);">
@@ -94,7 +94,7 @@ function buildFeedCard(item, index) {
 
         <div style="position:relative; cursor:pointer;" onclick="triggerImgEdit(${index})">
             <img id="detail-img-${index}"
-                 src="${item.imgUrl || '/uploads/' + item.imgName}"
+                 src="${item.imgName}"
                  style="width:100%; max-height:420px; object-fit:cover; display:block;">
             
             <input type="file" id="img-input-${index}" accept="image/*"
@@ -261,7 +261,7 @@ function buildAddModalHtml() {
                     background:#f5f5f5; cursor:pointer; font-family:'Gaegu'; font-size:14px;">
                     취소
                 </button>
-                <button onclick="submitAddPhoto()" style="
+                <button onclick="addPhoto()" style="
                     padding:8px 20px; border:none; border-radius:6px;
                     background:#555; color:#fff; cursor:pointer;
                     font-family:'Gaegu'; font-size:14px;">
@@ -291,27 +291,92 @@ function previewAddImage(event) {
     preview.src = URL.createObjectURL(file);
     preview.style.display = 'block';
 }
-
-function submitAddPhoto() {
+// async function addPhoto() {
+//     const data = await uploadSupabase();
+//     console.log(data.url)
+//     const title   = document.getElementById('addTitle').value.trim();
+//     const content = document.getElementById('addContent').value.trim();
+//     const formData = new FormData();
+//     formData.append('title', title);
+//     formData.append('content', content);
+//     formData.append('url', data.url);
+//
+//
+//
+//
+//
+// }
+async function addPhoto() {
     const title   = document.getElementById('addTitle').value.trim();
     const content = document.getElementById('addContent').value.trim();
-    const file    = document.getElementById('addImgFile').files[0];
-
-    if (!title || !content || !file) {
-        alert('사진, 제목, 내용을 모두 입력해주세요!');
+    // 1. 값 검증 (파일은 Supabase로 가니까 여기서 제외)
+    if (!title || !content) {
+        alert('제목과 내용을 모두 입력해주세요!');
         return;
     }
+    const data = await uploadSupabase();
+    if (!data || !data.url) return; // 업로드 실패 시 함수 종료
 
-    const today = new Date().toISOString().slice(0, 10).replace(/-/g, '.');
-    photoData.unshift({
-        userId:  'me',
-        imgUrl:  URL.createObjectURL(file),
-        imgName: file.name,
-        title,
-        content,
-        regDate: today
-    });
+    // 파일이 빠졌으므로 FormData 대신 URLSearchParams를 쓰면 서블릿에서 받기 훨씬 깔끔
+    const params = new URLSearchParams();
+    params.append('title', title);
+    params.append('content', content);
+    params.append('imgName', data.url); //
 
-    closeAddModal();
-    renderFeedView(); // 추가 후 피드 다시 그리기
+    try {
+        // 4. 서블릿(photo-data)으로 POST 요청
+        const response = await fetch('/photo-data', {
+            method: 'POST',
+            body: params // application/x-www-form-urlencoded 형식으로 전송됨
+        });
+        console.log(response.ok);
+            // 5. 서블릿에서 응답한 최신 DB 데이터(JSON) 받기
+            const row = await response.json();
+
+        if (row) {
+            // 6. 성공 처리 및 화면 갱신
+            closeAddModal();
+
+            alert('사진이 성공적으로 등록되었습니다!');
+            // 데이터를 받아와서 렌더링하는 함수 호출
+            // (renderFeedView가 전역 데이터를 쓰는지, 인자를 받는지에 따라 맞게 사용하세요)
+            renderFeedView();
+        } else {
+            alert('DB 저장에 실패했습니다.');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('서버 통신 중 오류가 발생했습니다.');
+    }
+}
+
+
+
+async function uploadSupabase() {
+    const fileInput = document.getElementById('addImgFile');
+    const file = fileInput.files[0];
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        const response = await fetch('/supabase', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            alert('업로드에 실패했습니다.');
+            return null;
+        }
+
+        // 서버에서 {"url": "https://..."} 형식으로 반환한다고 가정
+        const text = await response.text();  // 서버에서 단순 문자열
+        const data = { url: text };
+
+        return data; // 이렇게 반환해야 addPhoto에서 imgUrl.url 사용 가능
+    } catch (error) {
+        console.error('Error:', error);
+        alert('서버 통신 중 오류가 발생했습니다.');
+        return null;
+    }
 }
