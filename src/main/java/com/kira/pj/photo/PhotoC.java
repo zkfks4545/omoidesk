@@ -15,7 +15,7 @@ public class PhotoC extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
-        response.getWriter().println(PhotoDAO.PDAO.getJson());
+        response.getWriter().println(PhotoDAO.PDAO.getJson(request));
 
     }
 

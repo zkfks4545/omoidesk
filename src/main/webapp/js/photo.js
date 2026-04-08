@@ -357,12 +357,41 @@ async function uploadSupabase() {
 
         // 서버에서 {"url": "https://..."} 형식으로 반환한다고 가정
         const text = await response.text();  // 서버에서 단순 문자열
-        const data = { url: text };
+        const data = {url: text};
 
         return data; // 이렇게 반환해야 addPhoto에서 imgUrl.url 사용 가능
     } catch (error) {
         console.error('Error:', error);
         alert('서버 통신 중 오류가 발생했습니다.');
         return null;
+    }
+
+    async function uploadSupabase() {
+        const fileInput = document.getElementById('addImgFile');
+        const file = fileInput.files[0];
+        const formData = new FormData();
+        formData.append('file', file);
+
+        try {
+            const response = await fetch('/supabase', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                alert('업로드에 실패했습니다.');
+                return null;
+            }
+
+            // 서버에서 {"url": "https://..."} 형식으로 반환한다고 가정
+            const text = await response.text();  // 서버에서 단순 문자열
+            const data = {url: text};
+
+            return data; // 이렇게 반환해야 addPhoto에서 imgUrl.url 사용 가능
+        } catch (error) {
+            console.error('Error:', error);
+            alert('서버 통신 중 오류가 발생했습니다.');
+            return null;
+        }
     }
 }
