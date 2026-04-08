@@ -1,7 +1,9 @@
 // 방명록 데이터 불러오기 함수
 function loadGuestBoard(date = "") {
+
     let currentHostId = sessionStorage.getItem("currentHostId") || loginUserId;
     const gbUrl = date ? `/board?date=${date}&host_id=${currentHostId}` : `/board?host_id=${currentHostId}`;
+
 
     fetch(gbUrl)
         .then(response => response.json())

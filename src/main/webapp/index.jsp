@@ -12,13 +12,13 @@
     <script src="https://npmcdn.com/flatpickr/dist/l10n/ko.js"></script>
 
     <%-- CSS --%>
-    <link rel="stylesheet" href="css/index.css" />
-    <link rel="stylesheet" href="css/visitor.css" />
-    <link rel="stylesheet" href="css/guestboard.css" />
-    <link rel="stylesheet" href="css/diary.css" />
-    <link rel="stylesheet" href="css/main.css" />
-    <link rel="stylesheet" href="css/search.css" />
-        <link rel="stylesheet" href="css/user/loginbox.css"/>
+    <link rel="stylesheet" href="css/index.css"/>
+    <link rel="stylesheet" href="css/visitor.css"/>
+    <link rel="stylesheet" href="css/guestboard.css"/>
+    <link rel="stylesheet" href="css/diary.css"/>
+    <link rel="stylesheet" href="css/main.css"/>
+    <link rel="stylesheet" href="css/search.css"/>
+    <link rel="stylesheet" href="css/user/loginbox.css"/>
     <%-- JS --%>
     <script src="js/guestboard.js"></script>
     <script src="js/diary.js"></script>
@@ -104,23 +104,22 @@
                 id="notebook"
         >
 
-          <div class="notebook-header">
-            <h2> <span id="host-title"> 📖 Team Kira의 소소한 일상</span></h2>
-            <div class="mini-search-wrapper">
-              <input
-                type="text"
-                id="live-search-input"
-                placeholder="이름, 닉네임 검색 🌊"
-                autocomplete="off"
-              />
-              <span class="search-icon">🔍</span>
+            <div class="notebook-header">
+                <h2><span id="host-title"> 📖 Team Kira의 소소한 일상</span></h2>
+                <div class="mini-search-wrapper">
+                    <input
+                            type="text"
+                            id="live-search-input"
+                            placeholder="이름, 닉네임 검색 🌊"
+                            autocomplete="off"
+                    />
+                    <span class="search-icon">🔍</span>
 
 
                     <div id="search-dropdown" class="search-dropdown hidden"></div>
                 </div>
-                <div class="visitor">Today 15 | Total 1,234</div>
+                <div class="visitor">Today <span id="v-today">0</span> | Total <span id="v-total">0</span></div>
             </div>
-
             <div class="nb-tabs">
                 <div
                         class="nb-tab ${content eq 'main.jsp' ? 'active' : ''}"
@@ -136,7 +135,7 @@
                 </div>
                 <div
                         class="nb-tab ${content eq 'photo/photo.jsp' ? 'active' : ''}"
-                        data-src="/photo?ajax=true"
+                        data-src="photo/photo.jsp"
                 >
                     사진첩
                 </div>
@@ -193,8 +192,6 @@
             </div>
 
 
-
-
             <!-- 스마트폰 영역 -->
             <div class="smartphone">
                 <div class="phone-camera"></div>
@@ -216,19 +213,19 @@
                 ></div>
             </div>
 
-        <%-- 방문자 보기도 iframe 방식으로 --%>
+            <%-- 방문자 보기도 iframe 방식으로 --%>
 
-        <div class="v-recent-widget">
-            <div class="v-widget-title">방문자</div>
+            <div class="v-recent-widget">
+                <div class="v-widget-title">방문자</div>
 
-            <ul id="v-recent-list">
-                <li class="v-empty">불러오는 중...</li>
-            </ul>
+                <ul id="v-recent-list">
+                    <li class="v-empty">불러오는 중...</li>
+                </ul>
 
-            <div class="v-widget-btn" onclick="loadPage('visitor/visitor.jsp')">
-                <span class="v-btn-text">방문자 보기 ▶</span>
+                <div class="v-widget-btn" onclick="vloadPage('${pageContext.request.contextPath}/visitor?ajax=true')">
+                    <span class="v-btn-text">방문자 보기 ▶</span>
+                </div>
             </div>
-        </div>
 
         </div>
         <div class="postit">
@@ -239,15 +236,18 @@
 </div>
 <div class="desk-front"></div>
 
+
 <script>
     // 로그인 시 u_id, 비로그인 시 null
-    const loginUserId = "${sessionScope.loginUserId}";
     const loginUserPk = "${sessionScope.loginUserPk}";
+    // player.js나 다른 JS 파일들이 어떤 이름을 쓰더라도 호환되도록 별칭(Alias) 설정
+    const loginUserId = "${sessionScope.loginUserId}";
 </script>
 
 <div id="yt-player-hidden" style="display: none"></div>
 <script src="https://www.youtube.com/iframe_api"></script>
 <script src="js/music/player.js"></script>
 <script src="js/music/router.js"></script>
+<script src="js/photo.js"></script>
 </body>
 </html>

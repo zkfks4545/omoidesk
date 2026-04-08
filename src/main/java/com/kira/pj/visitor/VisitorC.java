@@ -27,9 +27,8 @@ public class VisitorC extends HttpServlet {
 
         // 프론트엔드(JS)에서 &ownerPk=XXX 형태로 홈피 주인의 PK를 반드시 보내야 한다.
         String ownerPk = request.getParameter("ownerPk");
-
         if (ownerPk == null || ownerPk.trim().isEmpty()) {
-            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST); // <-- 여기가 정확히 400 에러를 뱉는 곳이다.
             return;
         }
 
@@ -76,6 +75,15 @@ public class VisitorC extends HttpServlet {
             Gson gson = new Gson();
             response.setContentType("application/json; charset=UTF-8");
             response.getWriter().print(gson.toJson(recentList));
+
+        } else if ("hitCount".equals(reqType)) {
+            // [조회수 요청 처리]
+            VisitorDAO dao = new VisitorDAO();
+            Map<String, Integer> hitCount = dao.getHitCount(ownerPk);
+
+            Gson gson = new Gson();
+            response.setContentType("application/json; charset=UTF-8");
+            response.getWriter().print(gson.toJson(hitCount));
 
         } else if ("true".equals(ajax)) {
             request.getRequestDispatcher("visitor/visitor.jsp").forward(request, response);
