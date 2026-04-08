@@ -52,20 +52,29 @@ document.addEventListener("submit", function (e) {
             .catch(error => console.error("Error:", error));
     }
 });
-
 // =========================================================================
-// 2. 방명록 목록 불러오기 (GET 비동기)
+// 2. 방문자 목록 불러오기 (GET 비동기) - 캐시 차단 완벽 적용
 // =========================================================================
 function fetchVisitors(page) {
-    const currentOwnerPk = getTargetOwnerPk(); // 핵심 함수 호출!
+    const currentOwnerPk = getTargetOwnerPk();
 
     if (!currentOwnerPk) {
         console.error("주인 PK가 없어 목록을 불러올 수 없습니다.");
         return;
     }
 
-    // URL 끝에 &ownerPk=... 를 붙여서 백엔드의 400 에러를 방어한다.
-    fetch(`visitor?reqType=json&p=${page}&ownerPk=${currentOwnerPk}`)
+    // [핵심] 리스트를 불러올 때도 무조건 최신 데이터를 가져오도록 시간값을 꼬리표로 붙임
+    const noCache = new Date().getTime();
+
+    // fetch URL 끝에 &t=시간 붙이고, 헤더로 캐시 금지 명령 추가
+    fetch(`visitor?reqType=json&p=${page}&ownerPk=${currentOwnerPk}&t=${noCache}`, {
+        method: 'GET',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    })
         .then(response => {
             if (!response.ok) throw new Error("서버 응답 오류");
             return response.json();
@@ -75,18 +84,30 @@ function fetchVisitors(page) {
             renderPosts(data.visitorList);
             renderPaging(data.visitorList, globalCurrentPage);
         })
-        .catch(error => console.error("방명록 로딩 실패:", error));
+        .catch(error => console.error("방문자 목록 로딩 실패:", error));
 }
 
 // =========================================================================
 // 3. 우측 최근 방문자 로딩 & 자동 발도장 (GET 비동기)
 // =========================================================================
 function loadRecentVisitors() {
-    const currentOwnerPk = getTargetOwnerPk(); // 핵심 함수 호출!
+    const currentOwnerPk = getTargetOwnerPk();
 
     if (!currentOwnerPk) return;
 
-    fetch(`visitor?reqType=recent&ownerPk=${currentOwnerPk}`)
+    // [핵심 해결책] 브라우저 캐싱 완벽 차단 (Cache Buster)
+    // 브라우저가 서버 몰래 과거 데이터를 보여주는 것을 막기 위해, 매번 바뀌는 현재 시간을 붙인다.
+    const noCache = new Date().getTime();
+
+    // fetch URL 끝에 &t=시간 을 붙이고, 헤더에도 캐시 금지 명령을 내린다.
+    fetch(`visitor?reqType=recent&ownerPk=${currentOwnerPk}&t=${noCache}`, {
+        method: 'GET',
+        headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+        }
+    })
         .then(response => response.json())
         .then(data => {
             const listContainer = document.getElementById('v-recent-list');
@@ -105,8 +126,6 @@ function loadRecentVisitors() {
                 else if (v.v_emoji == 4) emoji = '🐶';
 
                 const li = document.createElement('li');
-
-                // [핵심 수정] 여기도 출력 텍스트와 두 번째 파라미터를 v_writer_nickname으로 교체했다.
                 li.innerHTML = `
                     <span style="display:flex; align-items:center; gap:5px;">
                         <span style="font-size: 11px;">${emoji}</span>
@@ -119,7 +138,6 @@ function loadRecentVisitors() {
         })
         .catch(err => console.error("최근 방문자 로딩 실패:", err));
 }
-
 // =========================================================================
 // 4. 방명록 삭제 로직
 // =========================================================================

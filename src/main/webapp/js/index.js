@@ -108,15 +108,16 @@ document.addEventListener("DOMContentLoaded", function () {
 // ⭐ 라우터 맵: 어떤 페이지에서 어떤 함수/디자인을 쓸지 한 곳에 정리!
 const pageRoutes = {
     "board.jsp": {
-        initFunc: () => loadGuestBoard(), // 방명록 로드 함수 (나중에 추가)
+        initFunc: () => loadGuestBoard(),
         cssClass: "",
     },
-    "visitor.jsp": {
+    // [핵심 수정] URL이 '/visitor?ajax=true' 이므로 'visitor'라는 단어만 잡도록 수정
+    "visitor": {
         initFunc: () => initVisitorLog(),
         cssClass: "is-visitor",
     },
     "diary.jsp": {
-        initFunc: () => loadDiary(), // 다이어리 로드 함수 (나중에 추가)
+        initFunc: () => loadDiary(),
         cssClass: "",
     },
 };
@@ -189,39 +190,43 @@ function loadPage(url) {
         });
 }
 
+// 파도타기 함수
 function goSearchMain(id, nick) {
+    // 1. 드롭다운 창 숨기기 및 검색어 비우기
     document.getElementById("search-dropdown").classList.add("hidden");
     document.getElementById("live-search-input").value = "";
 
+    // 2. 새로운 미니홈피 주인의 신분증(PK)을 브라우저에 메모
     sessionStorage.setItem("currentHostId", id);
     sessionStorage.setItem("currentHostNick", nick);
 
+    // 3. 서버에 새로운 주인의 정보 요청
     const searchUrl = `/search-main?host_id=${id}`;
     fetch(searchUrl)
         .then((response) => response.json())
         .then((searchData) => {
-            // (기존 코드) 왼쪽 프로필 이름, 제목, 상태메시지 변경 로직...
+            // --- 왼쪽 프로필 이름 및 상태메시지 변경 ---
             document.querySelector(".profile-name").innerText = nick;
+
             const titleElement = document.querySelector("#host-title");
             if (titleElement) titleElement.innerText = `${searchData.hompy_title}`;
+
             const stElement = document.querySelector("#status-text");
             if (stElement) stElement.innerHTML = `${searchData.st_message}`;
+
             const stDate = document.querySelector(".status-since");
             if (searchData.st_date) {
                 stDate.innerHTML = `${searchData.st_date.substring(0, 4)}`;
             }
 
             // =================================================================
-            // 🚨 [핵심 추가] 파도타기에 성공했으니, 새로운 데이터로 화면을 싹 갱신해라!
+            // 🚨 네가 질문했던 바로 그 부분! (방문자 위젯 갱신 및 발도장 트리거)
             // =================================================================
-
-            // 1. 우측 위젯 갱신 (이때 서버로 요청이 가면서 자동 방문 기록이 찍힘!)
             if (typeof loadRecentVisitors === "function") {
                 loadRecentVisitors();
             }
 
-            // 2. 파도타기를 했으면 남의 홈피 '메인(홈) 화면'이 뜨는 것이 정상이다.
-            // 가운데 수첩 영역을 새 주인의 홈 화면으로 갱신해 준다.
+            // 홈 탭으로 화면 갱신
             const homeUrl = document.querySelector('.menu-item').getAttribute('data-src');
             loadPage(homeUrl);
         })
