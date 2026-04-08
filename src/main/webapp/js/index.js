@@ -1,14 +1,19 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // ⭐ 브라우저야, 너 아까 누구 홈피 보고 있었는지 메모한 거 있어?
     const savedId = sessionStorage.getItem("currentHostId");
     const savedNick = sessionStorage.getItem("currentHostNick");
 
-    // 메모가 있으면 그 사람 홈피로 다시 돌려놓고, 없으면 내 홈피(main.jsp) 틀어줘
     if (savedId && savedNick) {
         goSearchMain(savedId, savedNick);
     } else {
-        loadPage("main.jsp");
+        loadPage("main.jsp"); // 기본 화면 로드
+
+        // 🚨 [핵심 추가] 초기 진입 시에도 우측 위젯을 즉시 불러오도록 방아쇠를 당긴다.
+        if (typeof loadRecentVisitors === "function") {
+            loadRecentVisitors();
+        }
     }
+
+    // ... (이하 기존 이벤트 등록 코드 동일)
 
     // 메뉴/탭 버튼 클릭 이벤트 등록
     document.querySelectorAll(".menu-item, .nb-tab").forEach((button) => {
@@ -185,11 +190,9 @@ function loadPage(url) {
 }
 
 function goSearchMain(id, nick) {
-    // 1. 클릭하는 순간 거추장스러운 검색 드롭다운 창 숨기기
     document.getElementById("search-dropdown").classList.add("hidden");
-    document.getElementById("live-search-input").value = ""; // 검색어 비우기
+    document.getElementById("live-search-input").value = "";
 
-    // ⭐ 새로고침 대비용 포스트잇 붙이기 (주소창 변경 없음!)
     sessionStorage.setItem("currentHostId", id);
     sessionStorage.setItem("currentHostNick", nick);
 
@@ -197,24 +200,30 @@ function goSearchMain(id, nick) {
     fetch(searchUrl)
         .then((response) => response.json())
         .then((searchData) => {
-            // 왼쪽 프로필 이름 변경
+            // (기존 코드) 왼쪽 프로필 이름, 제목, 상태메시지 변경 로직...
             document.querySelector(".profile-name").innerText = nick;
-
-            // 상단 미니홈피 제목 변경 (예: 📖 김동민의 소소한 일상)
             const titleElement = document.querySelector("#host-title");
             if (titleElement) titleElement.innerText = `${searchData.hompy_title}`;
-
-            // 왼쪽 프로필 상태메시지  변경
             const stElement = document.querySelector("#status-text");
-
-            if (stElement) {
-                stElement.innerHTML = `${searchData.st_message}`;
-            }
+            if (stElement) stElement.innerHTML = `${searchData.st_message}`;
             const stDate = document.querySelector(".status-since");
             if (searchData.st_date) {
-                // "2026-03-31" 에서 앞 4글자("2026")만 자름!
                 stDate.innerHTML = `${searchData.st_date.substring(0, 4)}`;
             }
+
+            // =================================================================
+            // 🚨 [핵심 추가] 파도타기에 성공했으니, 새로운 데이터로 화면을 싹 갱신해라!
+            // =================================================================
+
+            // 1. 우측 위젯 갱신 (이때 서버로 요청이 가면서 자동 방문 기록이 찍힘!)
+            if (typeof loadRecentVisitors === "function") {
+                loadRecentVisitors();
+            }
+
+            // 2. 파도타기를 했으면 남의 홈피 '메인(홈) 화면'이 뜨는 것이 정상이다.
+            // 가운데 수첩 영역을 새 주인의 홈 화면으로 갱신해 준다.
+            const homeUrl = document.querySelector('.menu-item').getAttribute('data-src');
+            loadPage(homeUrl);
         })
         .catch((error) => console.error("파도타기 데이터 로드 실패:", error));
 }
