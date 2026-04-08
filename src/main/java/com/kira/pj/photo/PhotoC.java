@@ -16,15 +16,10 @@ public class PhotoC extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().println(PhotoDAO.PDAO.getJson(request));
-
     }
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
-//        SupabaseModel.uploadSupabase(request);
         response.getWriter().println(PhotoDAO.PDAO.updatePhoto(request));
-    }
-
-    public void doPut(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
     }
 
     public void doDelete(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {

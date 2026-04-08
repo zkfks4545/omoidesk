@@ -329,35 +329,30 @@ async function addPhoto() {
 async function deletePhoto(index) {
     const imgName = photoData[index].imgName;
     if (!confirm('이 게시글을 삭제할까요?')) return;
+    const del = await deleteSupabase(imgName);
 
     try {
         const response = await fetch(`/photo-data?imgName=${encodeURIComponent(imgName)}`, {
             method: 'DELETE'
         });
-
         console.log(response.ok);
         // 5. 서블릿에서 응답한 최신 DB 데이터(JSON) 받기
         const text = await response.text(); //response가 그냥 텍스트에요
         const row = parseInt(text);
-
         if (row > 0) {
             // 6. 성공 처리 및 화면 갱신
             closeAddModal();
-
             alert('사진이 성공적으로 삭제되었습니다!');
             // 데이터를 받아와서 렌더링하는 함수 호출
             // (renderFeedView가 전역 데이터를 쓰는지, 인자를 받는지에 따라 맞게 사용하세요)
             loadPhoto()
         } else {
-            alert('DB 저장에 실패했습니다.');
+            alert('DB 삭제에 실패했습니다.');
         }
     } catch (error) {
         console.error('Error:', error);
         alert('서버 통신 중 오류가 발생했습니다.');
     }
-
-
-    // TODO: DB 연동 시 → fetch('photo-delete?id=...', { method:'DELETE' })
 
 }
 
@@ -374,7 +369,7 @@ async function uploadSupabase() {
         });
 
         if (!response.ok) {
-            alert('업로드에 실패했습니다.');
+            alert('클라우드 업로드에 실패했습니다.');
             return null;
         }
 
@@ -392,25 +387,18 @@ async function uploadSupabase() {
 
 }
 
-async function deleteSupabase() {
-
+async function deleteSupabase(imgName) {
 
     try {
-        const response = await fetch('/supabase', {
-            method: 'DELETE',
-            body: formData
+        const response = await fetch(`/supabase?imgName=${encodeURIComponent(imgName)}`, {
+            method: 'DELETE'
         });
 
         if (!response.ok) {
-            alert('업로드에 실패했습니다.');
+            alert('클라우드 삭제에 실패했습니다.');
             return null;
         }
 
-        // 서버에서 {"url": "https://..."} 형식으로 반환한다고 가정
-        const text = await response.text();  // 서버에서 단순 문자열
-        const data = {url: text};
-
-        return data; // 이렇게 반환해야 addPhoto에서 imgUrl.url 사용 가능
     } catch (error) {
         console.error('Error:', error);
         alert('서버 통신 중 오류가 발생했습니다.');

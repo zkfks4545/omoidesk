@@ -29,7 +29,7 @@ public class SupabaseC extends HttpServlet {
     }
 
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-//        resp.getWriter().println(SupabaseModel.deleteSupabase(req));
+        resp.getWriter().println(SupabaseModel.deleteSupabase(req));
     }
 
 
