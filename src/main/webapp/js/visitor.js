@@ -1,6 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-
 // 현재 페이지 상태 저장
     let globalCurrentPage = 1;
 
