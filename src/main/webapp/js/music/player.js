@@ -47,13 +47,21 @@ function updateIndexNowPlaying() {
 
     const phoneThumb = document.getElementById('phone-thumb');
     const phoneThumbBlur = document.getElementById('phone-thumb-blur'); // ✅ 추가: 배경 블러 요소 참조
+<<<<<<< queue
 
     const thumbUrl = 'https://img.youtube.com/vi/' + track.youtubeId + '/mqdefault.jpg';
 
+=======
+>>>>>>> bgm
     const ytLink = document.getElementById('yt-link');
     const bgmTitleMp3 = document.getElementById('bgm-title-mp3');
     const bgmTitlePhone = document.getElementById('bgm-title-phone');
 
+<<<<<<< queue
+=======
+    const thumbUrl = 'https://img.youtube.com/vi/' + track.youtubeId + '/mqdefault.jpg';
+
+>>>>>>> bgm
     // ✅ 썸네일 업데이트 (메인과 배경 둘 다)
     if (phoneThumb) phoneThumb.src = thumbUrl;
     if (phoneThumbBlur) phoneThumbBlur.src = thumbUrl; // ✅ 추가: 배경 이미지도 같은 주소로 설정
