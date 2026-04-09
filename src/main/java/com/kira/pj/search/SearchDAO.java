@@ -32,6 +32,7 @@ public class SearchDAO {
                 user.setU_name(rs.getString("u_name"));
                 user.setU_nickname(rs.getString("u_nickname"));
                 user.setU_email(rs.getString("u_email"));
+                user.setU_pk(rs.getString("u_pk"));
 
 
                 searchResult.add(user.toJSON());

@@ -60,7 +60,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     } else {
                         showSearchR.forEach((host) => {
                             const searchHtmlTemp = `
-                                <div class="search-item" onclick="goSearchMain('${host.u_id}','${host.u_nickname}')">
+                                <div class="search-item" onclick="goSearchMain('${host.u_pk}','${host.u_nickname}')">
                                     <div class="search-item-title">${host.u_nickname} <span style="font-weight:normal; font-size:12px; color:#ff7675;">(${host.u_name})</span></div>
                                     <div class="search-item-desc">📧 ${host.u_email}</div>
                                 </div>`;

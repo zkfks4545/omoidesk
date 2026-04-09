@@ -12,4 +12,8 @@ CREATE TABLE friend_relation
 CREATE SEQUENCE friend_seq;
 
 select *
-from friend_relation
+from friend_relation;
+
+DELETE
+from friend_relation;
+COMMIT;
