@@ -115,6 +115,10 @@ function loadPage(url) {
 }
 
 function goSearchMain(id, nick) {
+    if (!id || id === "null") {
+        console.error("아이디가 없어서 파도타기를 할 수 없습니다.");
+        return;
+    }
     document.getElementById("search-dropdown").classList.add("hidden");
     document.getElementById("live-search-input").value = "";
 
