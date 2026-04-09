@@ -76,9 +76,11 @@ public class MessageDAO {
                 Map<String, String> map = new HashMap<>();
                 map.put("m_pk", rs.getString("m_pk"));
                 map.put("target_pk", rs.getString("m_sender_pk"));
-                // 이 두 줄의 이름이 정확해야 프론트엔드에서 꺼내 쓸 수 있다!
-                map.put("target_nick", rs.getString("sender_nick")); // 보낸 사람 닉네임
-                map.put("u_id", rs.getString("u_id")); // 보낸 사람 아이디
+                map.put("target_nick", rs.getString("sender_nick"));
+
+                // 🚨 [수정 완료] 프론트엔드에서 날짜를 띄울 수 있도록 m_date 추가!
+                map.put("m_date", rs.getString("m_date_fmt"));
+
                 map.put("m_content", rs.getString("m_content"));
                 list.add(map);
             }
@@ -117,7 +119,10 @@ public class MessageDAO {
                 map.put("m_pk", rs.getString("m_pk"));
                 map.put("target_pk", rs.getString("m_receiver_pk"));
                 map.put("target_nick", rs.getString("receiver_nick"));
-                map.put("u_id", rs.getString("u_id")); // 🚨 [수정 2] 파도타기 핵심 부품 추가!
+
+                // 🚨 [수정 완료] 프론트엔드에서 날짜를 띄울 수 있도록 m_date 추가!
+                map.put("m_date", rs.getString("m_date_fmt"));
+
                 map.put("m_content", rs.getString("m_content"));
                 list.add(map);
             }
