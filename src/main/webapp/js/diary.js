@@ -1,145 +1,115 @@
 /**
- * [1] 다이어리 내용을 비동기로 불러와서 화면을 갈아끼우는 핵심 함수
+ * [최종] 다이어리 내용을 비동기로 불러오는 핵심 함수
  */
 function loadDiary(url = "diary") {
-    // 1. URL에 ajax 파라미터가 없으면 붙여줌 (상태 유지용)
-    if (!url.includes("ajax=true")) {
-        url += (url.includes("?") ? "&" : "?") + "ajax=true";
+    // 1. URL과 파라미터 분리
+    let baseUrl = url.split('?')[0];
+    let queryParams = new URLSearchParams(url.split('?')[1] || "");
+
+    // 2. 비동기 필수 파라미터 추가
+    queryParams.set("ajax", "true");
+
+    // ★ [핵심] 팀원분 index.js가 저장한 '방문 중인 홈피 주인 ID'를 가져옵니다.
+    // 백엔드님 홈피에 있을 때는 이 값이 백엔드님의 ID일 겁니다.
+    const currentHostId = sessionStorage.getItem("currentHostId");
+
+    if (currentHostId) {
+        // 주소창 파라미터가 내 아이디로 되어있어도, 방문 중인 주인 ID로 강제 교체!
+        queryParams.set("memberId", currentHostId);
     }
 
-    // 2. 주소창 앞에 슬래시(/)가 없어서 발생하는 404 방지 (상대경로 이슈 해결)
-    // 인텔리제이 context path가 '/'일 때 가장 안전한 방식입니다.
-    console.log("📬 요청 주소:", url);
+    const finalUrl = baseUrl + "?" + queryParams.toString();
+    console.log("📬 다이어리 서버 요청 주소:", finalUrl);
 
-    fetch(url)
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error(`서버 응답 에러 (상태코드: ${response.status})`);
-            }
-            // ★ 핵심: 반드시 .text()로 받아서 HTML로 처리
-            return response.text();
-        })
+    fetch(finalUrl)
+        .then((response) => response.text())
         .then((html) => {
             const contentArea = document.getElementById("notebook-content");
             if (contentArea) {
-                // 기존 내용을 싹 비우고 새 HTML 주입
                 contentArea.innerHTML = html;
 
-                // 페이지 상단으로 스크롤 이동 (부드럽게)
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            }
-
-            // 특정 날짜 목록인 경우 해당 위치로 스크롤 (성현님 기존 로직 유지)
-            if (url.includes("d=")) {
-                const board = document.querySelector(".diary-board");
-                if (board) {
-                    board.scrollIntoView({ behavior: "smooth", block: "start" });
+                // [성현님 요청] 날짜 클릭 시 목록으로 스크롤
+                if (queryParams.has("d")) {
+                    setTimeout(() => {
+                        const board = document.querySelector(".diary-board");
+                        if (board) board.scrollIntoView({behavior: "smooth", block: "start"});
+                    }, 50);
+                } else {
+                    window.scrollTo({top: 0, behavior: 'smooth'});
                 }
             }
         })
-        .catch((error) => {
-            console.error("❌ 다이어리 로드 실패:", error);
-            // 에러 시 사용자에게 알림 (선택 사항)
-            // alert("화면을 불러오는 중 오류가 발생했습니다.");
-        });
+        .catch((error) => console.error("❌ 다이어리 로드 실패:", error));
 }
 
-/**
- * [2] 일기 작성 (Create)
- */
+// --- 나머지 함수들은 성현님 원본 유지 (내부에서 loadDiary를 호출하므로 자동 적용됨) ---
 function submitDiaryForm() {
     const form = document.getElementById('diaryWriteForm');
     if (!form) return;
-
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
-
     fetch('diary-write', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: params
     })
-        .then(response => response.text())
-        .then(() => {
-            // 등록 후 해당 날짜 목록으로 이동
-            const y = formData.get('d_year');
-            const m = formData.get('d_month');
-            const d = formData.get('d_date');
-            loadDiary(`diary?y=${y}&m=${m}&d=${d}`);
-        })
-        .catch(error => console.error("일기 등록 실패:", error));
+        .then(() => loadDiary(`diary?y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`));
 }
 
-/**
- * [3] 일기 수정 (Update)
- */
 function updateDiaryForm() {
     const form = document.getElementById('diaryUpdateForm');
     if (!form) return;
-
     const formData = new FormData(form);
     const params = new URLSearchParams(formData);
-
     fetch('diary-update', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: params
     })
-        .then(response => response.text())
-        .then(() => {
-            const no = formData.get('no');
-            const y = formData.get('d_year');
-            const m = formData.get('d_month');
-            const d = formData.get('d_date');
-            // 수정 완료 후 상세 페이지 재로드
-            loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
-        })
-        .catch(error => console.error("일기 수정 실패:", error));
+        .then(() => loadDiary(`diary-detail?no=${formData.get('no')}&y=${formData.get('d_year')}&m=${formData.get('d_month')}&d=${formData.get('d_date')}`));
 }
 
-/**
- * [4] 댓글 등록
- */
 function submitReply(no, y, m, d) {
     const form = document.getElementById('replyWriteForm');
-    if (!form) return;
-
     const input = form.querySelector('input[name="r_txt"]');
     if (!input.value.trim()) {
         alert("댓글 내용을 입력해주세요! 😊");
-        input.focus();
         return;
     }
-
-    const formData = new FormData(form);
-    const params = new URLSearchParams(formData);
-
+    const params = new URLSearchParams(new FormData(form));
     fetch('diary-reply-write', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' },
+        headers: {'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'},
         body: params
     })
-        .then(response => response.text())
         .then(() => {
-            // 댓글 창 비우기
             input.value = "";
-            // 상세 페이지 새로고침
             loadDiary(`diary-detail?no=${no}&y=${y}&m=${m}&d=${d}`);
-        })
-        .catch(error => console.error("댓글 등록 실패:", error));
+        });
 }
 
-/**
- * [5] 댓글 삭제
- */
 function deleteReply(r_no, d_no, y, m, d) {
-    if (!confirm("이 댓글을 정말 삭제할까요? 🗑️")) return;
-
-    fetch(`diary-reply-delete?r_no=${r_no}`)
-        .then(response => response.text())
-        .then(() => {
-            // 삭제 후 상세 페이지 새로고침
-            loadDiary(`diary-detail?no=${d_no}&y=${y}&m=${m}&d=${d}`);
-        })
-        .catch(error => console.error("댓글 삭제 실패:", error));
+    if (!confirm("삭제할까요?")) return;
+    fetch(`diary-reply-delete?r_no=${r_no}`).then(() => loadDiary(`diary-detail?no=${d_no}&y=${y}&m=${m}&d=${d}`));
 }
+
+let currentPickerYear = new Date().getFullYear();
+
+function openQuickPicker(e) {
+    e.stopPropagation();
+    document.getElementById('quickDatePicker').style.display = 'block';
+}
+
+function updateQuickYear(val) {
+    currentPickerYear = val;
+}
+
+function confirmQuickDate(month) {
+    loadDiary(`diary?y=${currentPickerYear}&m=${month}`);
+    document.getElementById('quickDatePicker').style.display = 'none';
+}
+
+window.addEventListener('click', function (e) {
+    const picker = document.getElementById('quickDatePicker');
+    if (picker && !picker.contains(e.target)) picker.style.display = 'none';
+});

@@ -19,13 +19,41 @@ public class DiaryDAO {
     private DiaryDAO() {
     }
 
+    // [보조 메서드] ID를 가지고 해당 유저의 PK를 찾아오는 로직 (관계 확인용)
+    // 비동기 환경에서 세션의 ownerUserPk가 갱신되지 않는 문제를 해결합니다.
+    private String getUserPkById(String userId) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            con = DBManager.connect();
+            String sql = "SELECT u_pk FROM userReg WHERE u_id = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, userId.trim());
+            rs = pstmt.executeQuery();
+            if (rs.next()) return rs.getString("u_pk");
+        } catch (Exception e) { e.printStackTrace();
+        } finally { DBManager.close(con, pstmt, rs); }
+        return null;
+    }
+
     public void getCalendar(HttpServletRequest req) {
         Calendar cal = Calendar.getInstance();
-
         String y = req.getParameter("y");
         String m = req.getParameter("m");
         String d = req.getParameter("d");
         String mode = req.getParameter("mode");
+
+        // ★ [핵심] JS(loadDiary)가 보낸 memberId(방문 중인 주인 ID)를 받습니다.
+        String memberId = req.getParameter("memberId");
+
+        HttpSession session = req.getSession();
+        String myId = (String) session.getAttribute("loginUserId"); // 나 (sam2678)
+        String myPk = (String) session.getAttribute("loginUserPk");
+
+        // ★ 조회 대상 결정: 파라미터가 있으면 타인(백엔드), 없으면 나(서녕)
+        String targetId = (memberId == null || memberId.isEmpty()) ? myId : memberId;
+        req.setAttribute("ownerId", targetId);
 
         int year = (y == null || y.equals("")) ? cal.get(Calendar.YEAR) : Integer.parseInt(y);
         int month = (m == null || m.equals("")) ? cal.get(Calendar.MONTH) : Integer.parseInt(m) - 1;
@@ -36,7 +64,6 @@ public class DiaryDAO {
         int startDay = cal.get(Calendar.DAY_OF_WEEK);
         int lastDay = cal.getActualMaximum(Calendar.DAY_OF_MONTH);
 
-        // [중요] 달력 기본 데이터 세팅 (에러 나기 전에 미리 세팅!)
         req.setAttribute("startDay", startDay);
         req.setAttribute("lastDay", lastDay);
         req.setAttribute("curYear", curYear);
@@ -59,26 +86,20 @@ public class DiaryDAO {
 
             try {
                 con = DBManager.connect();
-                HttpSession session = req.getSession();
 
-                // 세션에서 내 정보 가져오기
-                String myId = (String) session.getAttribute("loginUserId");
-                String myPk = (String) session.getAttribute("loginUserPk");
-
-                // 미니홈피 주인 정보 (없으면 나로 간주)
-                String ownerId = (String) session.getAttribute("ownerUserId");
-                String ownerPk = (String) session.getAttribute("ownerUserPk");
-                if (ownerId == null) ownerId = (myId != null) ? myId : "";
-                if (ownerPk == null) ownerPk = (myPk != null) ? myPk : "";
-
-                // 관계 파악 (0:남남, 1:일촌, 2:본인)
-                int relation = 0;
-                if (myId != null && !myId.isEmpty() && ownerId != null && !ownerId.isEmpty()) {
-                    if (myId.equals(ownerId)) { relation = 2; }
-                    else if (myPk != null && ownerPk != null) {
+                // ★ [관계 파악 로직] 내 PK와 주인의 PK로 일촌 여부 판단
+                int relation = 0; // 0:남남, 1:일촌, 2:본인
+                if (myId != null && myId.equals(targetId)) {
+                    relation = 2; // 나 자신
+                } else {
+                    // ★ 주인의 ID로 DB에서 실시간 PK 조회
+                    String targetPk = getUserPkById(targetId);
+                    if (myPk != null && targetPk != null) {
                         FriendDAO fdao = new FriendDAO();
-                        FriendDTO fdto = fdao.checkRelation(myPk, ownerPk);
-                        if (fdto != null && fdto.getF_status() == 1) relation = 1;
+                        FriendDTO fdto = fdao.checkRelation(myPk, targetPk);
+                        if (fdto != null && fdto.getF_status() == 1) {
+                            relation = 1; // 일촌 확인 완료
+                        }
                     }
                 }
 
@@ -86,16 +107,16 @@ public class DiaryDAO {
                 String formattedDay = String.format("%02d", Integer.parseInt(d));
                 String fullDate = curYear + "-" + formattedMonth + "-" + formattedDay;
 
-                // SQL 쿼리 (공개범위 필터링)
+                // ★ [중요] 쿼리문: targetId의 글을 조회하고 관계별 필터링 적용
                 String sql = "SELECT * FROM diary_test WHERE TO_CHAR(d_date, 'YYYY-MM-DD') = ? AND d_id = ? ";
                 if (relation == 2) sql += "AND d_visibility IN (0, 1, 2) ";
-                else if (relation == 1) sql += "AND d_visibility IN (1, 2) ";
-                else sql += "AND d_visibility = 2 ";
+                else if (relation == 1) sql += "AND d_visibility IN (1, 2) "; // 일촌글 + 전체글
+                else sql += "AND d_visibility = 2 "; // 전체글만
                 sql += "ORDER BY d_no DESC";
 
                 pstmt = con.prepareStatement(sql);
                 pstmt.setString(1, fullDate);
-                pstmt.setString(2, ownerId);
+                pstmt.setString(2, targetId);
                 rs = pstmt.executeQuery();
 
                 while (rs.next()) {
@@ -105,132 +126,58 @@ public class DiaryDAO {
                     dto.setTitle(rs.getString("d_title"));
                     dto.setTxt(rs.getString("d_txt"));
                     dto.setVisibility(rs.getInt("d_visibility"));
-
-//                    System.out.println("여기 비저빌리티 있어요~!~!"+rs.getInt("d_visibility"));
                     posts.add(dto);
                 }
             } catch (Exception e) { e.printStackTrace(); }
             finally { DBManager.close(con, pstmt, rs); }
-
-
-
             req.setAttribute("posts", posts);
         }
     }
 
-    // 전체조회
-    public void selectAllDiary(HttpServletRequest req) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-        ResultSet rs = null;
-
-        try {
-            con = DBManager.connect();
-
-            // ★ 전체 조회에서도 내 글만 보이게 쿼리 수정!
-            HttpSession session = req.getSession();
-            String loginId = (String) session.getAttribute("loginUserId");
-
-            // ★ 공개 설정이 2(전체 공개)이거나, 내가 쓴 글인 것 가져오기!
-            String sql = "SELECT * FROM diary_test WHERE (d_visibility = 2 OR d_id = ?) ORDER BY d_date DESC";
-            pstmt = con.prepareStatement(sql);
-
-            if(loginId == null) loginId = "";
-            pstmt.setString(1, loginId);
-
-            rs = pstmt.executeQuery();
-            ArrayList<DiaryDTO> diaries = new ArrayList<>();
-
-            while (rs.next()) {
-                DiaryDTO dto = new DiaryDTO();
-                dto.setNo(rs.getInt("d_no"));
-                dto.setId(rs.getString("d_id"));
-                dto.setDate(rs.getDate("d_date"));
-                dto.setTitle(rs.getString("d_title"));
-                dto.setTxt(rs.getString("d_txt"));
-                dto.setVisibility(rs.getInt("d_visibility"));
-
-                diaries.add(dto);
-            }
-            req.setAttribute("diaries", diaries);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, rs);
-        }
-    }
-
-    // 일기 등록 기능 (Create)
     public void insertDiary(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DBManager.connect();
             String sql = "INSERT INTO diary_test VALUES (diary_test_seq.nextval, ?, TO_DATE(?, 'YYYY-MM-DD'), ?, ?, SYSDATE, ?)";
             pstmt = con.prepareStatement(sql);
-
             String year = req.getParameter("d_year");
             String month = req.getParameter("d_month");
             String date = req.getParameter("d_date");
             String title = req.getParameter("d_title");
             String txt = req.getParameter("d_txt");
             String visibility = req.getParameter("d_visibility");
-
-            // ★ 임시 아이디 지우고, 세션에서 진짜 아이디 꺼내기!
             HttpSession session = req.getSession();
             String id = (String) session.getAttribute("loginUserId");
-
-            // 로그인이 안 되어있으면 글 못 쓰게 막기
-            if (id == null || id.isEmpty()) {
-                System.out.println("로그인이 필요합니다!");
-                return;
-            }
-
+            if (id == null || id.isEmpty()) return;
             String formattedMonth = String.format("%02d", Integer.parseInt(month));
             String formattedDay = String.format("%02d", Integer.parseInt(date));
             String fullDate = year + "-" + formattedMonth + "-" + formattedDay;
-
-            pstmt.setString(1, id); // 👈 진짜 내 아이디 등록!
+            pstmt.setString(1, id);
             pstmt.setString(2, fullDate);
             pstmt.setString(3, title);
             pstmt.setString(4, txt);
-
-            int visValue = (visibility == null || visibility.equals("")) ? 2 : Integer.parseInt(visibility);
-            pstmt.setInt(5, visValue);
-
-            if (pstmt.executeUpdate() == 1) {
-                System.out.println("일기 등록 완벽 성공! (유저 연동 완료)");
-            }
-
-        } catch (Exception e) {
-            System.out.println("일기 등록 실패 ㅠㅠ");
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, null);
-        }
+            pstmt.setInt(5, Integer.parseInt(visibility));
+            pstmt.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, null); }
     }
 
-    // 상세보기 기능
     public void getDiaryDetail(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
-
         try {
             con = DBManager.connect();
-
             String no = req.getParameter("no");
             String y = req.getParameter("y");
             String m = req.getParameter("m");
             String d = req.getParameter("d");
-
+            String memberId = req.getParameter("memberId");
             String sql = "SELECT * FROM diary_test WHERE d_no = ?";
             pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, Integer.parseInt(no));
             rs = pstmt.executeQuery();
-
             if (rs.next()) {
                 DiaryDTO dto = new DiaryDTO();
                 dto.setNo(rs.getInt("d_no"));
@@ -239,83 +186,50 @@ public class DiaryDAO {
                 dto.setTxt(rs.getString("d_txt"));
                 dto.setDate(rs.getDate("d_date"));
                 dto.setVisibility(rs.getInt("d_visibility"));
-
                 req.setAttribute("diary", dto);
             }
-
             req.setAttribute("curYear", y);
             req.setAttribute("curMonth", m);
             req.setAttribute("selectedDay", d);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, rs);
-        }
+            req.setAttribute("ownerId", (memberId == null) ? "" : memberId);
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, rs); }
     }
 
-    // 삭제 기능
+    public void updateDiary(HttpServletRequest request) {
+        Connection con = null;
+        PreparedStatement pstmt = null;
+        try {
+            con = DBManager.connect();
+            String no = request.getParameter("no");
+            String title = request.getParameter("d_title");
+            String txt = request.getParameter("d_txt");
+            String visibility = request.getParameter("d_visibility");
+            String sql = "UPDATE diary_test SET d_title = ?, d_txt = ?, d_visibility = ? WHERE d_no = ?";
+            pstmt = con.prepareStatement(sql);
+            pstmt.setString(1, title);
+            pstmt.setString(2, txt);
+            pstmt.setInt(3, Integer.parseInt(visibility));
+            pstmt.setInt(4, Integer.parseInt(no));
+            pstmt.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, null); }
+    }
+
     public void deleteDiary(HttpServletRequest request) {
         Connection con = null;
         PreparedStatement pstmt = null;
-
         try {
             con = DBManager.connect();
             String no = request.getParameter("no");
             String sql = "DELETE FROM diary_test WHERE d_no = ?";
             pstmt = con.prepareStatement(sql);
             pstmt.setInt(1, Integer.parseInt(no));
-
-            if (pstmt.executeUpdate() == 1) {
-                System.out.println("일기 삭제 완벽 성공!");
-            }
-
-        } catch (Exception e) {
-            System.out.println("일기 삭제 실패 ㅠㅠ");
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, null);
-        }
+            pstmt.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, null); }
     }
 
-    // 수정 기능
-    public void updateDiary(HttpServletRequest request) {
-        Connection con = null;
-        PreparedStatement pstmt = null;
-
-        try {
-            con = DBManager.connect();
-
-            String no = request.getParameter("no");
-            String title = request.getParameter("d_title");
-            String txt = request.getParameter("d_txt");
-            String visibility = request.getParameter("d_visibility");
-
-            String sql = "UPDATE diary_test SET d_title = ?, d_txt = ?, d_visibility = ? WHERE d_no = ?";
-            pstmt = con.prepareStatement(sql);
-
-            pstmt.setString(1, title);
-            pstmt.setString(2, txt);
-
-            int visValue = (visibility == null || visibility.equals("")) ? 2 : Integer.parseInt(visibility);
-            pstmt.setInt(3, visValue);
-            pstmt.setInt(4, Integer.parseInt(no));
-
-            if (pstmt.executeUpdate() == 1) {
-                System.out.println("일기 수정 완벽 성공!");
-            }
-
-        } catch (Exception e) {
-            System.out.println("일기 수정 실패 ㅠㅠ");
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, null);
-        }
-    }
-
-    // --- [댓글 기능 추가] ---
-
-    // 1. 댓글 등록 (Create)
     public void insertReply(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
@@ -323,75 +237,42 @@ public class DiaryDAO {
             con = DBManager.connect();
             String sql = "INSERT INTO diary_reply VALUES (diary_reply_seq.nextval, ?, ?, ?, SYSDATE)";
             pstmt = con.prepareStatement(sql);
-
-            // 어느 글에 다는 댓글인지(d_no), 누가 쓰는지(id), 내용(txt)
-            String d_no = req.getParameter("d_no");
-            String r_txt = req.getParameter("r_txt");
-
-            HttpSession session = req.getSession();
-            String r_id = (String) session.getAttribute("loginUserId");
-
-            pstmt.setInt(1, Integer.parseInt(d_no));
-            pstmt.setString(2, r_id);
-            pstmt.setString(3, r_txt);
-
+            pstmt.setInt(1, Integer.parseInt(req.getParameter("d_no")));
+            pstmt.setString(2, (String) req.getSession().getAttribute("loginUserId"));
+            pstmt.setString(3, req.getParameter("r_txt"));
             pstmt.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, null);
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, null); }
     }
 
-    // 2. 해당 일기의 댓글들 가져오기 (Read)
     public void getReplies(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
         ResultSet rs = null;
         try {
             con = DBManager.connect();
-            String d_no = req.getParameter("no"); // 상세 보기 중인 일기 번호
-
             String sql = "SELECT * FROM diary_reply WHERE d_no = ? ORDER BY r_date ASC";
             pstmt = con.prepareStatement(sql);
-            pstmt.setInt(1, Integer.parseInt(d_no));
+            pstmt.setInt(1, Integer.parseInt(req.getParameter("no")));
             rs = pstmt.executeQuery();
-
             ArrayList<ReplyDTO> replies = new ArrayList<>();
             while (rs.next()) {
-                replies.add(new ReplyDTO(
-                        rs.getInt("r_no"),
-                        rs.getInt("d_no"),
-                        rs.getString("r_id"),
-                        rs.getString("r_txt"),
-                        rs.getDate("r_date")
-                ));
+                replies.add(new ReplyDTO(rs.getInt("r_no"), rs.getInt("d_no"), rs.getString("r_id"), rs.getString("r_txt"), rs.getDate("r_date")));
             }
-            req.setAttribute("replies", replies); // JSP에서 쓸 이름
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, rs);
-        }
+            req.setAttribute("replies", replies);
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, rs); }
     }
 
-    // 댓글 삭제 기능
     public void deleteReply(HttpServletRequest req) {
         Connection con = null;
         PreparedStatement pstmt = null;
         try {
             con = DBManager.connect();
-            String r_no = req.getParameter("r_no");
-
-            String sql = "DELETE FROM diary_reply WHERE r_no = ?";
-            pstmt = con.prepareStatement(sql);
-            pstmt.setInt(1, Integer.parseInt(r_no));
-
+            pstmt = con.prepareStatement("DELETE FROM diary_reply WHERE r_no = ?");
+            pstmt.setInt(1, Integer.parseInt(req.getParameter("r_no")));
             pstmt.executeUpdate();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            DBManager.close(con, pstmt, null);
-        }
+        } catch (Exception e) { e.printStackTrace(); }
+        finally { DBManager.close(con, pstmt, null); }
     }
 }
