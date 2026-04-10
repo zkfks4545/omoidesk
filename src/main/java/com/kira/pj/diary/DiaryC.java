@@ -14,18 +14,25 @@ public class DiaryC extends HttpServlet {
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("text/html; charset=UTF-8");
 
-        // 1. 세션에서 로그인한 내 ID 가져오기
         HttpSession session = request.getSession();
         String loginUserId = (String) session.getAttribute("loginUserId");
 
-        // 2. 파라미터로 넘어온 memberId(다이어리 주인) 확인
+        // ★ 팀원분 index.js 규칙(host_id)과 성현님 규칙(memberId) 둘 다 체크
         String memberId = request.getParameter("memberId");
+        String hostId = request.getParameter("host_id");
 
-        // 3. memberId가 없으면 내 다이어리, 있으면 해당 유저의 다이어리 조회
-        // DAO의 getCalendar 메서드 내부에서 이 targetId를 사용해 DB 조회를 해야 합니다.
-        String targetId = (memberId == null || memberId.isEmpty()) ? loginUserId : memberId;
+        // 둘 중 하나라도 있으면 그 값을 주인으로 인정
+        String targetId = memberId;
+        if (targetId == null || targetId.isEmpty()) {
+            targetId = hostId;
+        }
 
-        // DAO에 targetId를 세팅 (DAO 로직에 따라 request에 담아 보내는 방식 유지)
+        // 여전히 없으면 내 다이어리
+        if (targetId == null || targetId.isEmpty()) {
+            targetId = loginUserId;
+        }
+
+        // JSP로 넘겨줄 때는 'ownerId'로 통일
         request.setAttribute("ownerId", targetId);
 
         DiaryDAO.DDAO.getCalendar(request);

@@ -18,7 +18,6 @@
                     <input type="hidden" name="d_year" value="${curYear}">
                     <input type="hidden" name="d_month" value="${curMonth}">
                     <input type="hidden" name="d_date" value="${selectedDay}">
-                        <%-- 누구 다이어리에 쓰는지 ID 유지 --%>
                     <input type="hidden" name="memberId" value="${ownerId}">
 
                     <input name="d_title" placeholder="제목을 입력하세요" style="width:100%; padding:15px; border:none; border-bottom:2px solid #f7cfcd; font-family:'Gaegu'; font-size:22px; outline:none; box-sizing: border-box;">
@@ -95,7 +94,6 @@
                     <div style="font-size:18px; color:#555; line-height:1.8; min-height:200px; white-space: pre-wrap;">${diary.txt}</div>
 
                     <div style="text-align:right; margin-top:20px;">
-                            <%-- 수정/삭제 버튼 제어: 작성자와 로그인한 유저가 같을 때만 --%>
                         <c:if test="${diary.id eq sessionScope.loginUserId}">
                             <button onclick="loadDiary('diary-update?no=${diary.no}&y=${curYear}&m=${curMonth}&d=${selectedDay}&memberId=${ownerId}')" class="write-btn" style="background:#ddd; color:#333;">수정</button>
                             <button onclick="if(confirm('정말 삭제할까요? 🗑️')) loadDiary('diary-delete?no=${diary.no}&memberId=${ownerId}')" class="write-btn" style="background:#ff9999;">삭제</button>
@@ -115,9 +113,7 @@
                         <div class="reply-list">
                             <c:forEach var="r" items="${replies}">
                                 <div style="padding:10px; border-bottom:1px solid #fff3f3; display:flex; justify-content:space-between; align-items:center;">
-                                    <div style="font-family:'Gaegu'; font-size:18px;">
-                                        <b style="color:#ff8e8b;">${r.r_id}:</b> ${r.r_txt}
-                                    </div>
+                                    <div><b style="color:#ff8e8b;">${r.r_id}:</b> ${r.r_txt}</div>
                                     <c:if test="${r.r_id eq sessionScope.loginUserId}">
                                         <button type="button" style="border:none; background:none; cursor:pointer;" onclick="deleteReply(${r.r_no}, ${diary.no}, ${curYear}, ${curMonth}, ${selectedDay})">❌</button>
                                     </c:if>
@@ -133,12 +129,10 @@
         <c:otherwise>
             <div class="calendar-header">
                 <span class="cal-title-wrap" style="position: relative;">
-                    <%-- ★ 방향표 없이 글자 클릭 시 팝업 --%>
                     <span class="cal-title-click" onclick="openQuickPicker(event)">
                         <span class="cal-year-unit">${curYear}</span>.<span class="cal-month-unit">${curMonth < 10 ? '0' : ''}${curMonth}</span>
                     </span>
 
-                    <%-- 보조 캘린더 팝업 --%>
                     <div id="quickDatePicker" class="month-picker-pop-layer" onclick="event.stopPropagation()">
                         <div style="text-align: center; border-bottom: 1px solid #fdf0f0; padding-bottom: 10px; margin-bottom: 10px;">
                             <select id="quickYearSelect" onchange="updateQuickYear(this.value)" class="picker-year-select-box">
@@ -183,7 +177,6 @@
                 <div class="diary-board">
                     <div class="board-header">
                         <h3>📅 ${selectedDay}일의 일기</h3>
-                            <%-- 글쓰기 버튼 제어: 다이어리 주인일 때만 --%>
                         <c:if test="${ownerId eq sessionScope.loginUserId}">
                             <button onclick="loadDiary('diary?y=${curYear}&m=${curMonth}&d=${selectedDay}&mode=write&memberId=${ownerId}')" class="write-btn">일기쓰기</button>
                         </c:if>
