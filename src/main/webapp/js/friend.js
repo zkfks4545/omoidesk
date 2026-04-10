@@ -175,17 +175,23 @@ function executeFriendAction(action, targetPk) {
 // ==========================================
 // 8. 일촌 목록 불러오기 & 화면 그리기 (프라이버시 보호 장착)
 // ==========================================
+// ==========================================
+// 8. 일촌 목록 불러오기 & 화면 그리기 (프라이버시 + 쪽지 기능)
+// ==========================================
 function loadFriendList() {
-    // 🚨 1단계 [보안 검색대]: 현재 접속 중인 미니홈피 주인의 PK를 확인한다.
-    const savedOwnerPk = sessionStorage.getItem("currentHostId");
+    // 1단계 [보안 검색대]: 쓰레기값 완벽 청소
+    let savedOwnerPk = sessionStorage.getItem("currentHostId");
+
+    // JS 특유의 "null", "undefined" 문자열이 들어오면 진짜 빈 값으로 바꿔버린다!
+    if (savedOwnerPk === "null" || savedOwnerPk === "undefined") {
+        savedOwnerPk = null;
+    }
+
     const targetOwnerPk = savedOwnerPk ? savedOwnerPk : loginUserPk;
 
-    // 🚨 2단계 [차단]: 현재 홈피 주인(targetOwnerPk)과 로그인한 나(loginUserPk)가 다르면?
+    // 2단계 [차단]: 현재 홈피 주인과 로그인한 내가 다르면 차단
     if (targetOwnerPk !== loginUserPk) {
-        // 네가 원했던 바로 그 얼러트 창!
         alert("본인의 일촌만 확인할 수 있습니다. 🔒");
-
-        // 화면에 빙글빙글 도는 로딩 스피너도 지우고, 철벽 방어 메시지로 덮어버린다.
         const container = document.getElementById("friend-list-container");
         if (container) {
             container.innerHTML = `
@@ -194,10 +200,10 @@ function loadFriendList() {
                     타인의 일촌 목록은 비공개입니다.
                 </div>`;
         }
-        return; // 🚨 여기서 함수를 강제로 종료! (서버에 데이터 달라고 조르지 않음)
+        return; // 여기서 함수 종료
     }
 
-    // 3단계 [통과]: 내 미니홈피가 맞다면 정상적으로 리스트를 가져온다.
+    // 3단계 [통과]: 내 미니홈피가 맞다면 리스트 가져오기
     fetch(`/friendview?action=list`)
         .then(res => res.json())
         .then(list => {
@@ -218,7 +224,7 @@ function loadFriendList() {
                 <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:15px; border-radius:10px; border:1px solid #f2c0bd; box-shadow: 2px 2px 5px rgba(0,0,0,0.02); margin-bottom:10px;">
                     <div style="display:flex; flex-direction:column; gap:5px;">
                         
-                        <span style="font-size:18px; cursor:pointer;" onclick="goSearchMain('${f.friend_pk}', '${f.u_nickname}')">
+                        <span style="font-size:18px; cursor:pointer;" onclick="goSearchMain('${f.u_id}', '${f.friend_pk}', '${f.u_nickname}')">
                             🌱 <b>${f.u_nickname}</b>
                         </span>
                         
@@ -226,6 +232,8 @@ function loadFriendList() {
                     </div>
                     
                     <div style="display:flex; gap:5px;">
+                        <button onclick="goToWriteMessage('${f.friend_pk}')" style="background:#a29bfe; color:white; border:none; padding:5px 12px; border-radius:15px; cursor:pointer; font-family:'Gaegu', cursive;">쪽지</button>
+                        
                         <button onclick="deleteFriendFromList('${f.friend_pk}')" style="background:#ff7675; color:white; border:none; padding:5px 12px; border-radius:15px; cursor:pointer; font-family:'Gaegu', cursive;">일촌 끊기</button>
                     </div>
                 </div>`;
@@ -253,4 +261,27 @@ function deleteFriendFromList(targetPk) {
             alert("삭제에 실패했습니다.");
         }
     });
+}
+
+// 일촌 목록에서 쪽지 버튼을 눌렀을 때의 동작
+function goToWriteMessage(targetPk) {
+    // 1. 네 index.jsp에 있는 쪽지함 메뉴(또는 탭)를 찾아서 강제로 클릭시킨다!
+    // (이러면 경로 꼬일 일이 절대 없다)
+    const msgMenu = document.querySelector('.menu-item[data-src*="message.jsp"]') || document.querySelector('.nb-tab[data-src*="message.jsp"]');
+
+    if (msgMenu) {
+        msgMenu.click();
+    } else {
+        alert("쪽지함 메뉴를 찾을 수 없습니다. index.jsp에 쪽지함을 추가해주세요!");
+        return;
+    }
+
+    // 2. 화면이 불려오기를 0.4초 정도 넉넉히 기다린 뒤, '쪽지 쓰기' 화면을 열고 친구를 고정한다.
+    setTimeout(() => {
+        if (typeof openWriteMessage === "function") {
+            openWriteMessage(targetPk);
+        } else {
+            console.error("message.js 파일이 아직 로딩되지 않았습니다!");
+        }
+    }, 400);
 }

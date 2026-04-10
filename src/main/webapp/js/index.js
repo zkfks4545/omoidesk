@@ -109,8 +109,10 @@ function loadPage(url) {
             if (content) content.innerHTML = html;
 
             const notebook = document.getElementById("notebook");
+
             if (notebook) {
                 notebook.classList.remove("is-visitor");
+
                 for (const path in pageRoutes) {
                     if (url.includes(path)) {
                         const route = pageRoutes[path];

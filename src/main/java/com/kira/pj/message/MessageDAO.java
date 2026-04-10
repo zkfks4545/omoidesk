@@ -59,7 +59,8 @@ public class MessageDAO {
         List<Map<String, String>> list = new ArrayList<>();
 
         // 발신자의 닉네임을 알기 위해 userReg와 JOIN
-        String sql = "SELECT m.m_pk, m.m_sender_pk, u.u_nickname as sender_nick, m.m_content, TO_CHAR(m.m_date, 'YY.MM.DD HH24:MI') as m_date_fmt, m.m_read_status "
+        // [수정 1] SELECT 문에 u.u_id 추가!
+        String sql = "SELECT m.m_pk, m.m_sender_pk, u.u_nickname as sender_nick, u.u_id, m.m_content, TO_CHAR(m.m_date, 'YY.MM.DD HH24:MI') as m_date_fmt, m.m_read_status "
                 + "FROM private_message m "
                 + "JOIN userReg u ON m.m_sender_pk = u.u_pk "
                 + "WHERE m.m_receiver_pk = ? AND m.m_receiver_del = 0 "
@@ -74,11 +75,13 @@ public class MessageDAO {
             while (rs.next()) {
                 Map<String, String> map = new HashMap<>();
                 map.put("m_pk", rs.getString("m_pk"));
-                map.put("target_pk", rs.getString("m_sender_pk")); // 파도타기용 PK
-                map.put("target_nick", rs.getString("sender_nick")); // 보낸 사람 닉네임
-                map.put("m_content", rs.getString("m_content"));
+                map.put("target_pk", rs.getString("m_sender_pk"));
+                map.put("target_nick", rs.getString("sender_nick"));
+
+                // 🚨 [수정 완료] 프론트엔드에서 날짜를 띄울 수 있도록 m_date 추가!
                 map.put("m_date", rs.getString("m_date_fmt"));
-                map.put("m_read_status", String.valueOf(rs.getInt("m_read_status")));
+
+                map.put("m_content", rs.getString("m_content"));
                 list.add(map);
             }
         } catch (Exception e) {
@@ -99,7 +102,7 @@ public class MessageDAO {
         List<Map<String, String>> list = new ArrayList<>();
 
         // 수신자의 닉네임을 알기 위해 userReg와 JOIN
-        String sql = "SELECT m.m_pk, m.m_receiver_pk, u.u_nickname as receiver_nick, m.m_content, TO_CHAR(m.m_date, 'YY.MM.DD HH24:MI') as m_date_fmt, m.m_read_status "
+        String sql = "SELECT m.m_pk, m.m_receiver_pk, u.u_nickname as receiver_nick, u.u_id, m.m_content, TO_CHAR(m.m_date, 'YY.MM.DD HH24:MI') as m_date_fmt, m.m_read_status "
                 + "FROM private_message m "
                 + "JOIN userReg u ON m.m_receiver_pk = u.u_pk "
                 + "WHERE m.m_sender_pk = ? AND m.m_sender_del = 0 "
@@ -114,11 +117,13 @@ public class MessageDAO {
             while (rs.next()) {
                 Map<String, String> map = new HashMap<>();
                 map.put("m_pk", rs.getString("m_pk"));
-                map.put("target_pk", rs.getString("m_receiver_pk")); // 파도타기용 PK
-                map.put("target_nick", rs.getString("receiver_nick")); // 받는 사람 닉네임
-                map.put("m_content", rs.getString("m_content"));
+                map.put("target_pk", rs.getString("m_receiver_pk"));
+                map.put("target_nick", rs.getString("receiver_nick"));
+
+                // 🚨 [수정 완료] 프론트엔드에서 날짜를 띄울 수 있도록 m_date 추가!
                 map.put("m_date", rs.getString("m_date_fmt"));
-                map.put("m_read_status", String.valueOf(rs.getInt("m_read_status")));
+
+                map.put("m_content", rs.getString("m_content"));
                 list.add(map);
             }
         } catch (Exception e) {
