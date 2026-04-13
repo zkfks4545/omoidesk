@@ -9,7 +9,7 @@ function loadDiary(url = "diary") {
     // 2. 비동기 필수 파라미터 추가
     queryParams.set("ajax", "true");
 
-    // ★ [핵심] 팀원분 index.js가 저장한 '방문 중인 홈피 주인 ID'를 가져옵니다.
+    // ★ index.js가 저장한 '방문 중인 홈피 주인 ID'를 가져옵니다.
     const currentHostId = sessionStorage.getItem("currentHostId");
 
     if (currentHostId) {
@@ -17,6 +17,7 @@ function loadDiary(url = "diary") {
         queryParams.set("memberId", currentHostId);
     }
 
+    // 아이디랑 날짜 다 정리했으니 서버가 데이터 가져오게 요청
     const finalUrl = baseUrl + "?" + queryParams.toString();
     console.log("📬 다이어리 서버 요청 주소:", finalUrl);
 
@@ -96,7 +97,7 @@ function deleteReply(r_no, d_no, y, m, d) {
 let currentPickerYear = new Date().getFullYear();
 
 function openQuickPicker(e) {
-    e.stopPropagation();
+    e.stopPropagation(); //버튼을 눌렀을 때 클릭 이벤트가 부모 요소로 퍼지는 걸 막아서, 피커를 열자마자 닫히는 불상사를 방지.
     document.getElementById('quickDatePicker').style.display = 'block';
 }
 
