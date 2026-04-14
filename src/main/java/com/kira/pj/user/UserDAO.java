@@ -348,7 +348,7 @@ public class UserDAO {
                 PreparedStatement pshompy = null;
                 ResultSet rshompy = null;
                 try {
-                    String hompySql = "SELECT hompy_title FROM main_test WHERE host_id = ?";
+                    String hompySql = "SELECT hompy_title, st_message FROM main_test WHERE host_id = ?";
                     pshompy = conn.prepareStatement(hompySql);
                     pshompy.setString(1, rs.getString("u_id")); // 방금 로그인 성공한 아이디 사용
                     rshompy = pshompy.executeQuery();
@@ -356,9 +356,11 @@ public class UserDAO {
                     if (rshompy.next()) {
                         // DB에 설정한 홈피 제목이 있으면 세션에 저장 (이름을 loginUserHompyTitle로 지정하셨네요!)
                         session.setAttribute("loginUserHompyTitle", rshompy.getString("hompy_title"));
+                        session.setAttribute("loginUserStMessage", rshompy.getString("st_message"));
                     } else {
                         // 없으면 null 처리
                         session.setAttribute("loginUserHompyTitle", null);
+                        session.setAttribute("loginUserStMessage", null);
                     }
                 } catch (Exception e) {
                     System.out.println("홈피 타이틀 로드 중 오류 발생");
