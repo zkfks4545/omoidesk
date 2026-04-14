@@ -145,7 +145,7 @@
         >
 
             <div class="notebook-header">
-                <h2><span id="host-title"> 📖 Team Kira의 소소한 일상</span></h2>
+                <h2><span id="host-title"> ${sessionScope.loginUserHompyTitle}</span></h2>
                 <div class="mini-search-wrapper">
                     <input
                             type="text"
