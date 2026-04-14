@@ -158,8 +158,9 @@ const pageRoutes = {
     // 🚨 [여기에 핵심 추가] 쪽지함 메뉴를 클릭했을 때 initMessage()를 실행하도록 라우터에 등록한다.
     "message.jsp": {
         initFunc: () => typeof initMessage === "function" && initMessage(),
-        cssClass: ""
+        cssClass: "",
     }
+
 };
 
 function loadPage(url) {
