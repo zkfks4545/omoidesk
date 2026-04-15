@@ -1,7 +1,9 @@
 let photoData = [];
+let currentPhotoView = 'grid';
+let gridScrollTop = 0; // 그리드 스크롤 위치 저장용
 
 // =============================================
-// 상태 저장을 위한 변수 (댓글 작성/삭제 시 스크롤 및 열림 상태 유지용)
+// 상태 저장을 위한 변수
 // =============================================
 let savedScrollTop = 0;
 let openCommentSections = [];
@@ -13,7 +15,6 @@ function saveState() {
     openCommentSections = [];
     photoData.forEach(item => {
         const section = document.getElementById(`comment-section-${item.photoId}`);
-        // maxHeight가 0px이 아니고 세팅되어 있다면 열려있는 상태
         if (section && section.style.maxHeight && section.style.maxHeight !== '0px') {
             openCommentSections.push(item.photoId);
         }
@@ -22,37 +23,38 @@ function saveState() {
 
 function restoreState() {
     const container = document.getElementById('notebook-content');
-
     openCommentSections.forEach(pid => {
         const section = document.getElementById(`comment-section-${pid}`);
         if (section) {
             section.style.transition = 'none';
-            section.style.maxHeight = '2000px'; // ✨ 수정: 500px -> 2000px 으로 넉넉하게!
-            void section.offsetHeight; // Reflow
+            section.style.maxHeight = '2000px';
+            void section.offsetHeight;
             section.style.transition = 'max-height 0.3s ease-in-out';
         }
     });
 
-    // ✨ 수정: 높이 계산이 끝난 후 스크롤을 복구하도록 setTimeout 사용 (비율 100% 튕김 방지)
     if (container) {
-        setTimeout(() => {
-            container.scrollTop = savedScrollTop;
-        }, 10); // 10ms만 줘도 브라우저가 안정을 찾습니다.
+        container.style.scrollBehavior = 'auto';
+        container.scrollTop = savedScrollTop;
+        container.style.scrollBehavior = '';
     }
 }
 
 // =============================================
 // 메인 로드
 // =============================================
-// preserveState가 true면 기존 스크롤과 댓글창 열림 상태를 기억합니다.
 function loadPhoto(preserveState = false) {
-    if (preserveState) saveState();
+    if (preserveState) {
+        saveState();
+    } else {
+        currentPhotoView = 'grid';
+        gridScrollTop = 0;
+    }
 
     const container = document.getElementById('notebook-content');
     container.style.overflowY = 'auto';
     container.style.height = '100%';
 
-    // 상태 유지가 아닐 때만 로딩바 표시 (댓글 달 때 깜빡임 방지)
     if (!preserveState) {
         container.innerHTML = '<div style="text-align:center; padding:20px;">사진첩을 열고 있어요... 📸</div>';
     }
@@ -63,8 +65,40 @@ function loadPhoto(preserveState = false) {
         .then(res => res.json())
         .then(data => {
             photoData = data;
-            renderFeedView(hostId);
-            if (preserveState) restoreState(); // 렌더링 후 상태 복구
+
+            if (currentPhotoView === 'grid') {
+                renderGridView(hostId);
+
+                if (container) {
+                    container.style.scrollBehavior = 'auto';
+                    if (preserveState) container.scrollTop = gridScrollTop;
+
+                    requestAnimationFrame(() => {
+                        const wrapper = document.getElementById('grid-wrapper');
+                        if (wrapper) {
+                            wrapper.style.animation = 'none';
+                            wrapper.style.opacity = '1';
+                        }
+                        container.style.scrollBehavior = '';
+                    });
+                }
+            } else {
+                renderFeedView(hostId);
+
+                if (container) {
+                    container.style.scrollBehavior = 'auto';
+                    if (preserveState) restoreState();
+
+                    requestAnimationFrame(() => {
+                        const wrapper = document.getElementById('feed-wrapper');
+                        if (wrapper) {
+                            wrapper.style.animation = 'none';
+                            wrapper.style.opacity = '1';
+                        }
+                        container.style.scrollBehavior = '';
+                    });
+                }
+            }
         })
         .catch(err => {
             container.innerHTML = '<div style="text-align:center; padding:20px; color:red;">사진첩 로딩 실패 ㅠㅠ</div>';
@@ -73,7 +107,119 @@ function loadPhoto(preserveState = false) {
 }
 
 // =============================================
-// 피드 뷰
+// 3x3 그리드 뷰 렌더링
+// =============================================
+function renderGridView(hostId) {
+    const container = document.getElementById('notebook-content');
+    const isOwner = (hostId === loginUserId);
+
+    let html = `
+        <style>
+            @keyframes shrinkIn {
+                0% { transform: scale(1.05); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+        <div id="grid-wrapper" style="opacity:0; transform-origin: center center;"> 
+            
+            <div style="
+                position:sticky; top:-15px; z-index:10;
+                background:transparent; 
+                padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                
+                <h2 style="display:${isOwner ? 'block' : 'none'}; margin:0; font-size:20px; color:#444; font-weight:bold; font-family:'Gaegu', cursive; letter-spacing:0.5px; text-shadow:1px 1px 3px rgba(255,255,255,0.9), -1px -1px 3px rgba(255,255,255,0.9);">
+                    📸 My Photo Album
+                </h2>
+                
+                <button onclick="openAddModal()" style="
+                    width:38px; height:38px; border-radius:50%;
+                    border:none; background:#ffb3ba; color:#fff;
+                    font-size:24px; font-weight:300; cursor:pointer; 
+                    display:${isOwner ? 'flex' : 'none'}; align-items:center; justify-content:center;
+                    box-shadow:0 4px 12px rgba(255, 179, 186, 0.4); 
+                    transition:transform 0.2s ease, background 0.2s ease;"
+                    onmouseover="this.style.transform='scale(1.08)'; this.style.background='#f5a3ab';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='#ffb3ba';">
+                    +
+                </button>
+            </div>
+
+            <div style="background:#f5f5f5; min-height:100%; padding-bottom:30px;">
+    `;
+
+    if (photoData.length === 0) {
+        html += `<div style="text-align:center; color:#bbb; padding:40px; font-family:'Gaegu', cursive;">아직 사진이 없어요. + 버튼으로 추가해보세요!</div>`;
+    } else {
+        html += `<div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:2px; padding:2px;">`;
+        photoData.forEach((item, index) => {
+            html += `
+                <div style="aspect-ratio:1/1; cursor:pointer; overflow:hidden; background:#eee;" onclick="switchToFeedView(${index})">
+                    <img src="${item.imgName}" 
+                         style="width:100%; height:100%; object-fit:cover; transition:transform 0.2s;" 
+                         onmouseover="this.style.transform='scale(1.05)'" 
+                         onmouseout="this.style.transform='scale(1)'">
+                </div>
+            `;
+        });
+        html += `</div>`;
+    }
+
+    html += `</div></div>`;
+    html += buildAddModalHtml();
+    container.innerHTML = html;
+}
+
+// =============================================
+// 인스타그램식 화면 전환
+// =============================================
+function switchToFeedView(index) {
+    const container = document.getElementById('notebook-content');
+
+    if (container) gridScrollTop = container.scrollTop;
+
+    currentPhotoView = 'feed';
+    const targetPid = photoData[index].photoId;
+    const hostId = sessionStorage.getItem("currentHostId") || loginUserId;
+
+    renderFeedView(hostId);
+
+    if (container) {
+        container.style.scrollBehavior = 'auto';
+
+        const targetCard = document.getElementById(`detail-card-${targetPid}`);
+        if (targetCard) {
+            container.scrollTop = targetCard.offsetTop - 60;
+        }
+
+        requestAnimationFrame(() => {
+            const wrapper = document.getElementById('feed-wrapper');
+            if (wrapper) wrapper.style.animation = 'expandIn 0.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+            container.style.scrollBehavior = '';
+        });
+    }
+}
+
+function switchToGridView() {
+    currentPhotoView = 'grid';
+    const hostId = sessionStorage.getItem("currentHostId") || loginUserId;
+
+    renderGridView(hostId);
+
+    const container = document.getElementById('notebook-content');
+    if (container) {
+        container.style.scrollBehavior = 'auto';
+        container.scrollTop = gridScrollTop;
+
+        requestAnimationFrame(() => {
+            const wrapper = document.getElementById('grid-wrapper');
+            if (wrapper) wrapper.style.animation = 'shrinkIn 0.3s cubic-bezier(0.1, 0.9, 0.2, 1) forwards';
+            container.style.scrollBehavior = '';
+        });
+    }
+}
+
+// =============================================
+// 피드 뷰 (모든 사진 다 렌더링)
 // =============================================
 function renderFeedView(hostId) {
     const container = document.getElementById('notebook-content');
@@ -81,43 +227,64 @@ function renderFeedView(hostId) {
     const isOwner = (hostId === loginId);
 
     let html = `
-        <div style="
-            position:sticky; top:-15px; z-index:10;
-            background:#fff; border-bottom:1px solid #eee;
-            padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
-            box-shadow:0 2px 6px rgba(0,0,0,0.06);">
-            <h2 style=" display:${isOwner ? 'inline' : 'none'}; margin:0; font-size:18px; color:#333; font-family:'Gaegu', cursive;">🖼️ My Photo Album</h2>
-            <button onclick="openAddModal()" style="
-                width:34px; height:34px; border-radius:50%;
-                border:2px solid #bbb; background:#fff;
-                font-size:20px; cursor:pointer; color:#666;
-                display:${isOwner ? 'flex' : 'none'}; align-items:center; justify-content:center;
-                box-shadow:2px 2px 6px rgba(0,0,0,0.1);"
-                onmouseover="this.style.background='#f0f0f0'"
-                onmouseout="this.style.background='#fff'">+</button>
-        </div>
+        <style>
+            @keyframes expandIn {
+                0% { transform: scale(0.92); opacity: 0; }
+                100% { transform: scale(1); opacity: 1; }
+            }
+        </style>
+        <div id="feed-wrapper" style="opacity: 0; transform-origin: top center;"> 
+            
+            <div style="
+                position:sticky; top:-15px; z-index:10;
+                background:transparent; 
+                padding:16px 20px; display:flex; justify-content:space-between; align-items:center;">
+                
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <button onclick="switchToGridView()" style="
+                        width:36px; height:36px; border-radius:50%;
+                        background:#f8f9fa; border:1px solid #eaeaea; 
+                        cursor:pointer; font-size:14px; color:#666; 
+                        display:flex; align-items:center; justify-content:center;
+                        box-shadow:0 2px 6px rgba(0,0,0,0.05);
+                        transition:all 0.2s ease;" 
+                        onmouseover="this.style.background='#f0f0f0'; this.style.transform='scale(1.05)';"
+                        onmouseout="this.style.background='#f8f9fa'; this.style.transform='scale(1)';"
+                        title="목록으로">
+                        ◀
+                    </button>
+                    <h2 style="display:${isOwner ? 'block' : 'none'}; margin:0; font-size:20px; color:#444; font-weight:bold; font-family:'Gaegu', cursive; letter-spacing:0.5px; text-shadow:1px 1px 3px rgba(255,255,255,0.9), -1px -1px 3px rgba(255,255,255,0.9);">
+                        📸 My Photo Album
+                    </h2>
+                </div>
 
-        <div style="font-family:'Gaegu', cursive; background:#f5f5f5; min-height:100%; padding-bottom:30px; padding-top:10px;">
-            <div style="display:flex; flex-direction:column; gap:16px; padding:0 16px;">
+                <button onclick="openAddModal()" style="
+                    width:38px; height:38px; border-radius:50%;
+                    border:none; background:#ffb3ba; color:#fff;
+                    font-size:24px; font-weight:300; cursor:pointer; 
+                    display:${isOwner ? 'flex' : 'none'}; align-items:center; justify-content:center;
+                    box-shadow:0 4px 12px rgba(255, 179, 186, 0.4); 
+                    transition:transform 0.2s ease, background 0.2s ease;"
+                    onmouseover="this.style.transform='scale(1.08)'; this.style.background='#f5a3ab';"
+                    onmouseout="this.style.transform='scale(1)'; this.style.background='#ffb3ba';">
+                    +
+                </button>
+            </div>
+
+            <div style="font-family:'Gaegu', cursive; background:#f5f5f5; min-height:100%; padding-bottom:30px; padding-top:10px;">
+                <div style="display:flex; flex-direction:column; gap:16px; padding:0 16px;">
     `;
-
-    if (photoData.length === 0) {
-        html += `<div style="text-align:center; color:#bbb; padding:40px;">아직 사진이 없어요. + 버튼으로 추가해보세요!</div>`;
-    }
 
     photoData.forEach((item, index) => {
         html += buildFeedCard(item, index, isOwner, loginId);
     });
 
-    html += `</div></div>`;
+    html += `</div></div></div>`;
     html += buildAddModalHtml();
 
     container.innerHTML = html;
 }
 
-// =============================================
-// 피드 카드 1장 빌더
-// =============================================
 // =============================================
 // 피드 카드 1장 빌더
 // =============================================
@@ -132,7 +299,8 @@ function buildFeedCard(item, index, isOwner, loginId) {
         box-shadow: 0 4px 10px rgba(0,0,0,0.03); margin-bottom: 20px;">
 
         <div style="display:flex; flex-direction:row;">
-            <div style="width:520px; min-width:520px; height:400px; overflow:hidden; border-right:1px solid #eee;">
+            
+            <div style="width:520px; min-width:520px; height:400px; overflow:hidden; border-right:1px solid #eee; position:relative;">
                 <img id="detail-img-${pid}"
                      src="${item.imgName}"
                      style="width:100%; height:100%; object-fit:cover; display:block;">
@@ -216,8 +384,7 @@ function buildFeedCard(item, index, isOwner, loginId) {
                                 display:flex; align-items:center; justify-content:center;
                                 font-size:13px; font-weight:700; color:#d4537e;
                                 border:1px solid #f4c0d155;
-                                overflow:hidden;
-                                cursor:pointer; /* ✨ 클릭 가능한 포인터 모양 */
+                                overflow:hidden; cursor:pointer;
                                 font-family:'Gaegu', cursive;">
                                 ${c.profileImgUrl
                 ? `<img src="${c.profileImgUrl}" style="width:100%; height:100%; object-fit:cover;">`
@@ -289,13 +456,14 @@ function buildFeedCard(item, index, isOwner, loginId) {
     </div>
     `;
 }
+
 // =============================================
 // 댓글창 슬라이드 토글 기능
 // =============================================
 function toggleComment(pid) {
     const commentSection = document.getElementById(`comment-section-${pid}`);
     if (commentSection.style.maxHeight === '0px' || commentSection.style.maxHeight === '') {
-        commentSection.style.maxHeight = '500px';
+        commentSection.style.maxHeight = '2000px';
     } else {
         commentSection.style.maxHeight = '0px';
     }
@@ -326,7 +494,7 @@ async function addComment(photoId) {
 
         if (response.ok) {
             inputEl.value = '';
-            loadPhoto(true); // true를 넘겨서 애니메이션 없이 상태 유지!
+            loadPhoto(true);
         } else {
             alert('댓글 등록에 실패했습니다.');
         }
@@ -337,7 +505,7 @@ async function addComment(photoId) {
 }
 
 // =============================================
-// 댓글 삭제 (신규 기능)
+// 댓글 삭제
 // =============================================
 async function deleteComment(commentId) {
     if (!confirm('댓글을 삭제하시겠습니까?')) return;
@@ -348,7 +516,7 @@ async function deleteComment(commentId) {
         });
 
         if (response.ok) {
-            loadPhoto(true); // 삭제 후에도 스크롤 및 댓글창 열림 유지
+            loadPhoto(true);
         } else {
             alert('댓글 삭제에 실패했습니다.');
         }
@@ -357,7 +525,6 @@ async function deleteComment(commentId) {
         alert('서버 통신 중 오류가 발생했습니다.');
     }
 }
-
 
 // =============================================
 // 이미지 수정
@@ -390,7 +557,7 @@ async function deletePhoto(index) {
         const row = parseInt(text);
         if (row > 0) {
             alert('사진이 성공적으로 삭제되었습니다!');
-            loadPhoto(false); // 게시글이 삭제되었으므로 스크롤 리셋
+            loadPhoto(false);
         } else {
             alert('DB 삭제에 실패했습니다.');
         }
