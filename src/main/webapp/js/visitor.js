@@ -300,8 +300,10 @@ function vloadPage(url) {
                     // 초기화가 필요한 함수 route.initFunc를 실행한다 ,매칭되는 경로를 찾았다면 break로 반복문을 탈출
                     if (route.initFunc) route.initFunc();
                     break; } } })
+        // 400/500번대 HTTP에러가 발생했을 때(4번의 throw new Error가 실행되었을 때)에러 메시지를 포함한 대체화면
         .catch(error => {
             console.error("페이지 로드 실패:", error);
+        // (Fallback UI)을 직접 구성하여 (notebook-content)영역에 주입한다 사용자 경험(UX)을 유지하기 위한 조치.
             document.getElementById('notebook-content').innerHTML = `
                 <div class="nb-error">
                     😢 페이지를 불러올 수 없어요<br>

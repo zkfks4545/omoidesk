@@ -21,6 +21,8 @@ public class VisitorDAO {
         try {
             con = DBManager.connect();
             // 두 개의 작업(삭제, 삽입)을 하나의 세트로 묶기 위해 자동 커밋을 끈다.
+            // 보통 명령 하나 완료시 즉시 커밋을 하지만 지금은 기존 기록 삭제/새 기록 삽입 두가지 행동이 하나의 세트여서
+            // 트랜잭션 제어를 한다
             con.setAutoCommit(false);
 
             // Step A: 오늘 날짜로 남긴 발도장이 있다면 무조건 삭제한다.
@@ -32,6 +34,9 @@ public class VisitorDAO {
 
             // Step B: 기존 것이 지워졌든 안 지워졌든, 지금 시간(SYSDATE)으로 무조건 새로 등록한다.
             String sqlIns = "INSERT INTO visitor_log (v_id, v_writer_pk, v_owner_pk, v_emoji, v_date) VALUES (visitor_seq.NEXTVAL, ?, ?, ?, SYSDATE)";
+            // 복잡하게 수정을 안쓰고 삭제 후 삽입을 하는 이유는 기존 데이터가 존재하는지 조회한 다음 분기처리를 하는거보다
+            // 조건부 삭제 후 무조건 삽입을 하는 것이 시간 갱신 측멱에서 코드가 훨씬 간결해지기 때문
+            // 하지만 로그가 더 중요한 상황에서는 지금 사용불가능
             pstmtIns = con.prepareStatement(sqlIns);
             pstmtIns.setString(1, dto.getV_writer_pk());
             pstmtIns.setString(2, dto.getV_owner_pk());
@@ -67,6 +72,7 @@ public class VisitorDAO {
         String sql =
                 "SELECT v_id, v_writer_pk, v_owner_pk, v_emoji, " +
                         "TO_CHAR(v_date, 'MM.DD AM HH12:MI') as v_date_fmt " +
+                        //내림차순으로 정렬해서 가져옴 DESC
                         "FROM visitor_log WHERE v_owner_pk = ? ORDER BY v_date DESC";
 
         try {
@@ -74,6 +80,7 @@ public class VisitorDAO {
             pstmt = con.prepareStatement(sql);
             pstmt.setString(1, ownerPk);
             rs = pstmt.executeQuery();
+
 
             while (rs.next()) {
                 VisitorDTO v = new VisitorDTO();
