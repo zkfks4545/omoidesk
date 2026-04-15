@@ -14,6 +14,7 @@ public class CommentDTO {
 
     private int commentId;
     private int photoId;
+    private String userName; // ✨ 실명을 담을 변수
     private String userId;
     private String content;
     private String regDate;

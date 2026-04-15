@@ -200,21 +200,33 @@ public class PhotoDAO {
     }
 
     // 특정 사진의 댓글만 가져오는 내부 메서드 추가
+    // 특정 사진의 댓글만 가져오는 내부 메서드
     private List<CommentDTO> getCommentsByPhotoId(Connection conn, int photoId) {
         PreparedStatement ps = null;
         ResultSet rs = null;
-        String sql = "SELECT comment_id, photo_id, user_id, content, reg_date FROM photo_comment WHERE photo_id = ? ORDER BY reg_date ASC";
+
+        // ✨ 핵심: 회원 테이블명을 'userreg'로 수정하여 조인합니다!
+        String sql = "SELECT c.comment_id, c.photo_id, c.user_id, ur.u_name AS user_name, c.content, TO_CHAR(c.reg_date, 'YYYY-MM-DD HH24:MI') AS reg_date " +
+                "FROM photo_comment c " +
+                "JOIN userreg ur ON c.user_id = ur.u_id " +
+                "WHERE c.photo_id = ? ORDER BY c.reg_date ASC";
+
         List<CommentDTO> comments = new ArrayList<>();
 
         try {
             ps = conn.prepareStatement(sql);
             ps.setInt(1, photoId);
             rs = ps.executeQuery();
+
             while(rs.next()) {
                 CommentDTO comment = new CommentDTO();
                 comment.setCommentId(rs.getInt("comment_id"));
                 comment.setPhotoId(rs.getInt("photo_id"));
                 comment.setUserId(rs.getString("user_id"));
+
+                // ✨ 조인해서 가져온 실명(u_name -> user_name)을 세팅합니다.
+                comment.setUserName(rs.getString("user_name"));
+
                 comment.setContent(rs.getString("content"));
                 comment.setRegDate(rs.getString("reg_date"));
                 comments.add(comment);
@@ -222,7 +234,6 @@ public class PhotoDAO {
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
-            // conn은 닫으면 안 됩니다. 상위 메서드에서 닫아야 함.
             if (rs != null) try { rs.close(); } catch(Exception e){}
             if (ps != null) try { ps.close(); } catch(Exception e){}
         }

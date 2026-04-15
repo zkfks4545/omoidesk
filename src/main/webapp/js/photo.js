@@ -149,15 +149,6 @@ function buildFeedCard(item, index, isOwner, loginId) {
                             margin-bottom:20px; font-family:'Gaegu', cursive;">${item.content}</div>
 
                 <div style="display:flex; align-items:center; gap:20px; border-top:1px dashed #eee; padding-top:16px;">
-                    <button onclick="onLikeClick(${pid})" style="
-                        background:none; border:none; cursor:pointer;
-                        display:flex; align-items:center; gap:6px;
-                        color:#e88; font-size:15px; font-family:'Gaegu'; padding:0;">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#e88" stroke-width="2">
-                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                        </svg>
-                        <span id="like-count-${pid}">0</span>
-                    </button>
                     <button onclick="toggleComment(${pid})" style="
                         background:none; border:none; cursor:pointer;
                         display:flex; align-items:center; gap:6px;
@@ -191,7 +182,7 @@ function buildFeedCard(item, index, isOwner, loginId) {
                     ${item.comments && item.comments.length > 0 ? item.comments.map(c =>
         `<div style="padding:10px 0; border-bottom:1px dashed #eee; display:flex; justify-content:space-between; align-items:center;">
                         <div>
-                            <span style="color:#444; font-weight:bold;">${c.userId}</span>
+                            <span style="color:#444; font-weight:bold;">${c.userName}</span>
                             <span style="color:#555; margin-left:5px;">${c.content}</span>
                             <span style="color:#999; font-size:11px; margin-left:10px;">${c.regDate}</span>
                         </div>
