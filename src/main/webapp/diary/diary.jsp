@@ -75,7 +75,7 @@
             </div>
         </c:when>
 
-        <%-- [3] 상세 보기 화면 --%>
+        <%-- [3] 상세 보기 화면 (댓글 수정 집중 구간) --%>
         <c:when test="${showMode == 'detail'}">
             <div class="diary-board">
                 <div class="board-header">
@@ -119,10 +119,13 @@
 
                     <div class="reply-section">
                         <h4 style="font-family:'Gaegu'; color:#ff8e8b;">&#128172; 댓글 목록</h4>
-                        <form id="replyWriteForm" autocomplete="off" style="display:flex; gap:10px; margin-bottom:20px;" onsubmit="event.preventDefault();submitReply('${diary.no}', '${curYear}', '${curMonth}', '${selectedDay}')">
+                            <%-- ★ [수정] onsubmit에서 이벤트를 막고 submitReply를 확실히 호출 ★ --%>
+                        <form id="replyWriteForm" autocomplete="off" style="display:flex; gap:10px; margin-bottom:20px;"
+                              onsubmit="event.preventDefault(); submitReply('${diary.no}', '${curYear}', '${curMonth}', '${selectedDay}');">
                             <input type="hidden" name="d_no" value="${diary.no}">
                             <input name="r_txt" placeholder="따뜻한 댓글을 남겨주세요" style="flex:1; padding:10px; border:1px solid #f7cfcd; border-radius:5px; outline:none;">
-                            <button type="button" class="write-btn" >등록</button>
+                                <%-- ★ [수정] onclick을 추가해서 클릭 시에도 전송되게 함 ★ --%>
+                            <button type="button" class="write-btn" onclick="submitReply('${diary.no}', '${curYear}', '${curMonth}', '${selectedDay}')">등록</button>
                         </form>
 
                         <div class="reply-list">
@@ -231,4 +234,3 @@
         </c:otherwise>
     </c:choose>
 </div>
-
