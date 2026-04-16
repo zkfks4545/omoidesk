@@ -15,7 +15,7 @@ public class UpdateGBC extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("application/json; charset=utf-8");
-        response.getWriter().println(GuestBoardDAO.GBDAO.UpdateGuestBoard(request, response));
+        response.getWriter().println(GuestBoardDAO.GBDAO.UpdateGuestBoard(request));
     }
     public void destroy() {
     }

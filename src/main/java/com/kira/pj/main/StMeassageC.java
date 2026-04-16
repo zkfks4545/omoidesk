@@ -12,7 +12,7 @@ public class StMeassageC extends HttpServlet {
 
     public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
       response.setContentType("application/json; charset=UTF-8");
-       HomeDAO.editStMessage(request, response);
+       HomeDAO.editStMessage(request);
         response.getWriter().print("{\"message\": \"success\"}");
 
     }

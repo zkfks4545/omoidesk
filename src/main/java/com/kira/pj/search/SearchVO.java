@@ -15,9 +15,6 @@ public class SearchVO {
     private String u_email;
     private String u_pk;
 
-    public  String toJSON(){
-        Gson gson = new Gson();
-       return gson.toJson(this);
-    }
+
 
 }

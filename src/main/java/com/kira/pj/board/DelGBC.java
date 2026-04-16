@@ -16,7 +16,7 @@ public class DelGBC extends HttpServlet {
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("application/json; charset=utf-8");
-        response.getWriter().println(GuestBoardDAO.GBDAO.delGB(request, response));
+        response.getWriter().println(GuestBoardDAO.GBDAO.delGB(request));
     }
     public void destroy() {
     }

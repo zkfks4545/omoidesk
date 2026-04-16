@@ -1,6 +1,5 @@
 package com.kira.pj.search;
 
-import com.google.gson.Gson;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;

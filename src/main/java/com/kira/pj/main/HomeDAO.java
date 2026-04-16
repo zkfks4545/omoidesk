@@ -111,7 +111,7 @@ public class HomeDAO {
 
 
 
-    public static void editStMessage(HttpServletRequest request, HttpServletResponse response) {
+    public static void editStMessage(HttpServletRequest request) {
 
         Connection con = null;
         PreparedStatement ps = null;

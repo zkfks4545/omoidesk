@@ -16,13 +16,13 @@ public class BoardC extends HttpServlet {
         response.setContentType("application/json; charset=UTF-8");
 
         // DAO에서 가져온 JSON 문자열을 그대로 출력
-        response.getWriter().print(GuestBoardDAO.GBDAO.showGuestBoard(request, response));
+        response.getWriter().print(GuestBoardDAO.GBDAO.showGuestBoard(request));
     }
 
 
     public void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
         response.setContentType("application/json; charset=UTF-8");
-        response.getWriter().print(GuestBoardDAO.GBDAO.addHi(request,response));
+        response.getWriter().print(GuestBoardDAO.GBDAO.addHi(request));
     }
     public void destroy() {
     }

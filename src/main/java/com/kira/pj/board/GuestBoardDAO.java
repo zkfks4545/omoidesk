@@ -19,17 +19,15 @@ import java.util.Locale;
 public class GuestBoardDAO {
     public static final GuestBoardDAO GBDAO = new GuestBoardDAO();
 
-//    public Connection con = null;
 
     private GuestBoardDAO() {
         try {
-//            con = DBManager.connect();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }
 
-    public String showGuestBoard(HttpServletRequest request, HttpServletResponse response) {
+    public String showGuestBoard(HttpServletRequest request) {
         Connection con = null;
         PreparedStatement ps = null;
         ResultSet rs = null;
@@ -86,7 +84,7 @@ public class GuestBoardDAO {
         return null;
     }
 
-    public String addHi(HttpServletRequest request, HttpServletResponse response) {
+    public String addHi(HttpServletRequest request) {
         Connection con = null;
         PreparedStatement ps = null;
         String addHiResult = "{\"result\": \"fail\"}";
@@ -128,7 +126,7 @@ public class GuestBoardDAO {
         return addHiResult;
     }
 
-    public String UpdateGuestBoard(HttpServletRequest request, HttpServletResponse response) {
+    public String UpdateGuestBoard(HttpServletRequest request) {
         Connection con = null;
         PreparedStatement ps = null;
         String updateHiResult = "{\"result\": \"fail\"}";
@@ -158,7 +156,7 @@ public class GuestBoardDAO {
         return updateHiResult;
     }
 
-    public String delGB(HttpServletRequest request, HttpServletResponse response) {
+    public String delGB(HttpServletRequest request) {
 
         Connection con = null;
         PreparedStatement ps = null;
