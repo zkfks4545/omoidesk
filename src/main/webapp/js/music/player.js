@@ -1,7 +1,8 @@
 // player.js — index.jsp에서만 로드
 
 window.playlist = [];
-window.currentIndex = 0;
+// window.currentIndex = 0;
+window.currentTrackId = null;
 window.ytPlayer = null;
 window.fetchDone = false;
 window.apiReady = false;
@@ -19,26 +20,35 @@ const dummyPlaylist = [
 
 window.defaultPlaylist = dummyPlaylist.map((track) => ({ ...track }));
 
+function getCurrentIndex() {
+    if (!window.currentTrackId || !window.playlist.length) return 0;
+    return window.playlist.findIndex(t => t.youtubeId === window.currentTrackId);
+}
+
 function formatTime(sec) {
     const m = Math.floor(sec / 60);
     const s = Math.floor(sec % 60);
     return m + ":" + String(s).padStart(2, "0");
 }
 
-// [FIX 2] window.currentIndex 기준 통일
+// [FIX 2] window.CurrentTrackId 기준 통일
 function saveCurrentIndex() {
-    localStorage.setItem("bgmCurrentIndex", String(window.currentIndex));
+    localStorage.setItem("bgmCurrentTrackId", window.currentTrackId || "");
 }
 
 // [FIX 2] 공통 함수 — initPlayer/reloadPlaylist 모두 여기서 사용
-function restoreCurrentIndex(playlistLength) {
-    const saved = parseInt(localStorage.getItem("bgmCurrentIndex") || "0", 10);
-    return Math.min(saved, playlistLength - 1);
+function restoreCurrentIndex() {
+    const saved = localStorage.getItem("bgmCurrentTrackId");
+    if (saved && window.playlist.some(t => t.youtubeId === saved)) {
+        window.currentTrackId = saved;
+    } else if (window.playlist.length > 0) {
+        window.currentTrackId = window.playlist[0].youtubeId;
+    }
 }
 
 function updateIndexNowPlaying() {
     if (!window.playlist.length) return;
-    const track = window.playlist[window.currentIndex];
+    const track = window.playlist.find(t => t.youtubeId === window.currentTrackId);
     if (!track) return; // [FIX 4] 범위 방어
 
     const phoneThumb     = document.getElementById("phone-thumb");
@@ -66,17 +76,18 @@ function updateIndexNowPlaying() {
 
 function notifyBgmFrame() {
     if (typeof window.onTrackChanged === "function") {
-        window.onTrackChanged(window.currentIndex); // [FIX 2]
+        window.onTrackChanged(getCurrentIndex());
     }
 }
 
 // [FIX 2] + [FIX 4] — window.* 통일, 범위 검사 추가
-function playTrack(index) {
+function playTrack(trackId) {
     if (!window.playerReady) return;
-    if (index < 0 || index >= window.playlist.length) return; // [FIX 4]
-    window.currentIndex = index;
-    localStorage.setItem("bgmCurrentIndex", window.currentIndex);
-    window.ytPlayer.loadVideoById(window.playlist[window.currentIndex].youtubeId);
+    const track = window.playlist.find(t => t.youtubeId === trackId);
+    if (!track) return; // [FIX 4]
+    window.currentTrackId = trackId;
+    localStorage.setItem("bgmCurrentTrackId", window.currentTrackId);
+    window.ytPlayer.loadVideoById(trackId);
     updateIndexNowPlaying();
     notifyBgmFrame();
     saveCurrentIndex();
@@ -84,9 +95,12 @@ function playTrack(index) {
 
 function playNext() {
     if (!window.playerReady) return;
-    window.currentIndex = (window.currentIndex + 1) % window.playlist.length;
-    localStorage.setItem("bgmCurrentIndex", window.currentIndex);
-    window.ytPlayer.loadVideoById(window.playlist[window.currentIndex].youtubeId);
+    const currentIndex = getCurrentIndex();
+    const nextIndex = (currentIndex + 1) % window.playlist.length;
+    const nextTrack = window.playlist[nextIndex];
+    window.currentTrackId = nextTrack.youtubeId;
+    localStorage.setItem("bgmCurrentTrackId", window.currentTrackId);
+    window.ytPlayer.loadVideoById(nextTrack.youtubeId);
     updateIndexNowPlaying();
     notifyBgmFrame();
     saveCurrentIndex();
@@ -94,9 +108,12 @@ function playNext() {
 
 function playPrev() {
     if (!window.playerReady) return;
-    window.currentIndex = (window.currentIndex - 1 + window.playlist.length) % window.playlist.length;
-    localStorage.setItem("bgmCurrentIndex", window.currentIndex);
-    window.ytPlayer.loadVideoById(window.playlist[window.currentIndex].youtubeId);
+    const currentIndex = getCurrentIndex();
+    const prevIndex = (currentIndex - 1 + window.playlist.length) % window.playlist.length;
+    const prevTrack = window.playlist[prevIndex];
+    window.currentTrackId = prevTrack.youtubeId;
+    localStorage.setItem("bgmCurrentTrackId", window.currentTrackId);
+    window.ytPlayer.loadVideoById(prevTrack.youtubeId);
     updateIndexNowPlaying();
     notifyBgmFrame();
     saveCurrentIndex();
@@ -113,7 +130,9 @@ function initPlayer() {
     if (!window.playlist.length || !window.apiReady) return;
 
     // [FIX 2] 공통 함수 사용
-    window.currentIndex = restoreCurrentIndex(window.playlist.length);
+    restoreCurrentIndex();
+
+    const currentTrack = window.playlist.find(t => t.youtubeId === window.currentTrackId);
 
     const holder = document.getElementById("yt-player-hidden");
     if (holder) holder.innerHTML = "";
@@ -122,14 +141,14 @@ function initPlayer() {
 
     window.ytPlayer = new YT.Player("yt-player-hidden", {
         width: "0", height: "0",
-        videoId: window.playlist[window.currentIndex].youtubeId,
+        videoId: currentTrack.youtubeId,
         playerVars: { autoplay: 1, controls: 0, rel: 0, playsinline: 1 },
         events: {
             onReady: (event) => {
                 window.playerReady = true;
 
                 const realDuration = Math.floor(event.target.getDuration());
-                const currentTrack = window.playlist[window.currentIndex];
+                const currentTrack = window.playlist.find(t => t.youtubeId === window.currentTrackId)
                 if (currentTrack && Math.abs(currentTrack.duration - realDuration) > 1) {
                     console.log(`[시간 보정] ${currentTrack.title}: ${realDuration}초로 수정 중...`);
                     currentTrack.duration = realDuration;
@@ -155,7 +174,7 @@ function initPlayer() {
             onStateChange: (e) => {
                 if (e.data === YT.PlayerState.ENDED) {
                     const realDuration = Math.floor(e.target.getDuration());
-                    const currentTrack = window.playlist[window.currentIndex];
+                    const currentTrack = window.playlist.find(t => t.youtubeId === window.currentTrackId);
                     if (currentTrack && realDuration > 0 && Math.abs(currentTrack.duration - realDuration) > 1) {
                         currentTrack.duration = realDuration;
                         const params = new URLSearchParams();
@@ -171,7 +190,7 @@ function initPlayer() {
                 }
 
                 if (e.data === YT.PlayerState.PLAYING) {
-                    localStorage.setItem("bgmCurrentIndex", window.currentIndex);
+                    localStorage.setItem("bgmCurrentTrackId", window.currentTrackId);
                 }
 
                 const btn = document.getElementById("bgm-toggle");
@@ -213,9 +232,9 @@ function loadPlaylist(targetPk) {
             return;
         }
 
-        window.currentIndex = 0;
+        window.currentTrackId = window.playlist[0].youtubeId;
         if (window.ytPlayer && window.playerReady) {
-            window.ytPlayer.loadVideoById(window.playlist[0].youtubeId);
+            window.ytPlayer.loadVideoById(window.currentTrackId);
         } else if (window.apiReady) {
             initPlayer();
         }
