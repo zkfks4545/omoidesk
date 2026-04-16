@@ -108,7 +108,8 @@ function renderQueue() {
         if (!track.youtubeId) return;
 
         const item = document.createElement('div');
-        item.className = 'bgm-track-item' + (i === window.currentIndex ? ' active' : '');
+        const currentIndex = window.playlist.findIndex(t => t.youtubeId === window.currentTrackId);
+        item.className = 'bgm-track-item' + (i === currentIndex ? ' active' : '');
 
         const orderBtns = canEdit ? `
             <div class="bgm-track-order">
@@ -135,7 +136,7 @@ function renderQueue() {
 
         item.addEventListener('click', (e) => {
             if (e.target.closest('.bgm-track-delete') || e.target.closest('.bgm-track-move')) return;
-            if (typeof window.playTrack === 'function') window.playTrack(i);
+            if (typeof window.playTrack === 'function') window.playTrack(track.youtubeId);
         });
 
         if (canEdit) {
@@ -167,7 +168,8 @@ function renderQueue() {
     });
 
     if (typeof updateNowPlaying === "function") {
-        updateNowPlaying(window.playlist[window.currentIndex], window.currentIndex);
+        const currentIndex = window.playlist.findIndex(t => t.youtubeId === window.currentTrackId);
+updateNowPlaying(window.playlist[currentIndex], currentIndex);
     }
 }
 
@@ -176,30 +178,32 @@ async function deleteTrack(youtubeId) {
     if (!confirm('정말 삭제할까요?')) return;
 
     try {
-        const currentPlayingId = window.playlist[window.currentIndex]?.youtubeId;
-        const isDeletingCurrent = currentPlayingId === youtubeId;
+        const isDeletingCurrent = (window.currentTrackId === youtubeId);
+        const currentIndex = window.playlist.findIndex(t => t.youtubeId === youtubeId);
 
-        const res = await fetch(`/api/bgm?youtubeId=${encodeURIComponent(youtubeId)}`, {
-            method: 'DELETE'
-        });
+        // 미리 다음 곡 ID 확보
+        let nextTrackId = null;
+        if (isDeletingCurrent && window.playlist.length > 1) {
+            const nextIdx = (currentIndex + 1 >= window.playlist.length) ? 0 : currentIndex + 1;
+            nextTrackId = window.playlist[nextIdx].youtubeId;
+        }
+
+        const res = await fetch(`/api/bgm?youtubeId=${encodeURIComponent(youtubeId)}`, { method: 'DELETE' });
         const json = await res.json();
         if (json.result !== 'ok') return;
 
         if (isDeletingCurrent) {
-            alert('재생 중이던 곡이 삭제되었으므로 다음 곡으로 넘어갑니다.');
-
-            await reloadPlaylist(null, { keepPlaying: false });
-
-            if (window.playlist.length > 0) {
-                window.currentIndex = Math.min(window.currentIndex, window.playlist.length - 1);
-                playTrack(window.currentIndex);
-            } else if (window.ytPlayer) {
-                window.ytPlayer.stopVideo();
-            }
+            // reloadPlaylist 호출 시 미리 확보한 nextTrackId를 넘겨줌
+            await reloadPlaylist(null, {
+                keepPlaying: false,
+                currentPlayingId: nextTrackId
+            });
+            alert('재생 중이던 곡이 삭제되어 다음 곡을 재생합니다.');
         } else {
+            // 현재 재생 중이 아닌 곡을 지웠을 때는 현재 재생 곡 ID 유지
             await reloadPlaylist(null, {
                 keepPlaying: true,
-                currentPlayingId
+                currentPlayingId: window.currentTrackId
             });
         }
     } catch (e) {
@@ -331,7 +335,7 @@ async function bgmConfirmAdd() {
             closeBgmModal();
             // ✅ 추가 후 목록을 다시 불러와서 새 곡을 포함한 정렬된 리스트 표시
             // 🚩 [핵심 수정] 현재 재생 중인 노래 ID를 가져옴
-            const currentPlayingId = window.playlist[window.currentIndex]?.youtubeId;
+            const currentPlayingId = window.currentTrackId;
 
             // ✅ 옵션을 넣어서 리로드 (소리는 유지, 리스트만 갱신)
             await reloadPlaylist(null, {
@@ -358,27 +362,31 @@ function reloadPlaylist(targetPk, options = {}) {
         .then(tracks => {
             // 1. 데이터 할당
             if (!tracks || tracks.length === 0) {
-                window.playlist = dummyPlaylist;
+                window.playlist = window.defaultPlaylist;
                 window.isDefaultPlaylist = true;
                 window.currentHostNickname = null;
             } else {
                 window.playlist = tracks;
                 window.isDefaultPlaylist = false;
-                window.currentHostNickname = tracks[0].userNickname;
+                // window.currentHostNickname = tracks[0].userNickname;
             }
 
             // 2. 인덱스 보정 (여기가 중요)
-            if (currentPlayingId) {
-                const newIndex = window.playlist.findIndex(t => t.youtubeId === currentPlayingId);
-                window.currentIndex = (newIndex >= 0) ? newIndex : 0;
+            // [핵심] 인자로 넘어온 ID가 리스트에 있다면 그것을 현재 곡으로 확정
+            if (currentPlayingId && window.playlist.some(t => t.youtubeId === currentPlayingId)) {
+                window.currentTrackId = currentPlayingId;
             } else {
-                // 저장된 마지막 인덱스를 가져와서 안전하게 적용
-                const savedIndex = parseInt(localStorage.getItem("bgmCurrentIndex") || "0", 10);
-                window.currentIndex = (savedIndex < window.playlist.length) ? savedIndex : 0;
+                // 인자가 없거나 리스트에 없는 경우에만 스토리지 확인
+                const savedTrackId = localStorage.getItem("bgmCurrentTrackId");
+                if (savedTrackId && window.playlist.some(t => t.youtubeId === savedTrackId)) {
+                    window.currentTrackId = savedTrackId;
+                } else {
+                    window.currentTrackId = window.playlist.length > 0 ? window.playlist[0].youtubeId : null;
+                }
             }
 
             // 확정된 인덱스를 다시 저장
-            localStorage.setItem("bgmCurrentIndex", window.currentIndex);
+            localStorage.setItem("bgmCurrentTrackId", window.currentTrackId);
 
             window.fetchDone = true;
 
@@ -388,11 +396,8 @@ function reloadPlaylist(targetPk, options = {}) {
             }
 
             // 4. 실제 재생 명령 (주인이 바뀌었거나, 새로 재생해야 할 때만)
-            if (!keepPlaying && window.ytPlayer && window.playerReady && window.playlist.length > 0) {
-                const targetTrack = window.playlist[window.currentIndex];
-                if (targetTrack) {
-                    window.ytPlayer.loadVideoById(targetTrack.youtubeId);
-                }
+            if (!keepPlaying && window.ytPlayer && window.playerReady && window.currentTrackId) {
+                window.ytPlayer.loadVideoById(window.currentTrackId);
             }
         });
 }
@@ -409,7 +414,7 @@ function moveTrack(index, direction) {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= playlist.length) return;
 
-    const currentPlayingId = window.playlist[window.currentIndex]?.youtubeId;
+    const currentPlayingId = window.currentTrackId;
     const idA = playlist[index].youtubeId;
     const idB = playlist[targetIndex].youtubeId;
 
@@ -424,11 +429,12 @@ function moveTrack(index, direction) {
             playlist[index] = playlist[targetIndex];
             playlist[targetIndex] = tmp;
 
-            window.currentIndex = playlist.findIndex(t => t.youtubeId === currentPlayingId);
-            if (window.currentIndex < 0) window.currentIndex = 0;
+            // window.currentIndex = playlist.findIndex(t => t.youtubeId === currentPlayingId);
+            // if (window.currentIndex < 0) window.currentIndex = 0;
 
             renderQueue();
-            updateNowPlaying(window.playlist[window.currentIndex], window.currentIndex);
+            const currentIndex = window.playlist.findIndex(t => t.youtubeId === window.currentTrackId);
+updateNowPlaying(window.playlist[currentIndex], currentIndex);
             if (typeof updateIndexNowPlaying === 'function') updateIndexNowPlaying();
         })
         .catch(err => console.error('순서 변경 실패:', err));
@@ -456,9 +462,9 @@ function shufflePlaylist() {
             if (data.result !== 'ok') return;
 
             // 현재 재생 중인 트랙 찾아서 currentIndex 보정
-            const currentId = window.playlist[window.currentIndex]?.youtubeId;
+            // const currentId = window.playlist[window.currentIndex]?.youtubeId;
             window.playlist = shuffled;
-            window.currentIndex = shuffled.findIndex(t => t.youtubeId === currentId);
+            // window.currentIndex = shuffled.findIndex(t => t.youtubeId === currentId);
             if (window.currentIndex < 0) window.currentIndex = 0;
 
             renderQueue();
