@@ -134,12 +134,12 @@
 }
 .update-title {
     margin: 0 0 5px 0;
-    font-size: 13px;
+    font-size: 20px;
 }
 .diary-title { color: #a29bfe; }
 .gb-title { color: #ff7675; }
 .update-text {
-    font-size: 12px;
+    font-size: 18px;
     color: #5a4a3a;
     margin: 0;
     overflow: hidden;

@@ -221,9 +221,9 @@ body::after {
 
 .pencil-jar-wrap {
     margin-top: auto;
-    margin-left: 20px;
-    margin-bottom: 25px;
-    transform: rotate(-3deg);
+    margin-left: 5px;
+    margin-bottom: 5px;
+    transform: rotate(-6deg);
     cursor: pointer;
     position: relative;
     z-index: 10;
