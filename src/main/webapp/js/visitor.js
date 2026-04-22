@@ -1,7 +1,7 @@
 //현재 보고있는 페이지 번호를 저장 -> 게시글삭제나 수정 등에도 같은 페이지 유지하려고 사용
 let globalCurrentPage = 1;
 
-// [핵심 함수] 현재 미니홈피의 주인이 누구인지(ownerPk) 알아내는 공통 함수
+// [핵심 함수] 현재 미니홈피의 주인이 누구인지(ownerPk) 알아내는 공통 함 수
 function getTargetOwnerPk() {
 
     // 타인의 미니홈피 방문 중인지 확인 (세션 스토리지에 남의 PK가 메모되어 있는지 확인)
@@ -23,50 +23,43 @@ function getTargetOwnerPk() {
     return savedOwnerPk; }
 
 // 1. 방명록 작성 (POST 비동기)
-// 문서 전체(document)에submit 이벤트 리스너를 등록했다. 이벤트 버블링을 활용하여,발생한 이벤트의 타겟(e.target.id)이
+// 문서 전체(document)에 submit 이벤트 리스너를 등록했다. 이벤트 버블링을 활용하여, 발생한 이벤트의 타겟(e.target.id)이
 // "v-visitor-form"일 때만 내부 로직을 실행하도록 필터링한다.
 document.addEventListener("submit", function (e) {
     if (e.target && e.target.id === "v-visitor-form") {
-        // e.preventDefault() 브라우저가 폼 데이터를 서버로 전송하여 페이지를 새로고침하는 기본 동작을 차단한다 비동기 필수조건
+        // e.preventDefault() 브라우저가 폼 데이터를 서버로 전송하여 페이지를 새로고침하는 기본 동작을 차단한다 (비동기 필수조건)
         e.preventDefault();
         // getTargetOwnerPk()를 호출하여 방명록이 작성될 대상(미니홈피의 주인)의 식별자를 가져온다.
         const currentOwnerPk = getTargetOwnerPk();
         // 식별자가 유효하지 않을경우 경고창을 띄우고 return으로 함수 실행을 즉각 중단하여 서버로 무의미한 요청 방지
         if (!currentOwnerPk) {
             alert("잘못된 접근입니다. (미니홈피 주인을 찾을 수 없음)");
-            return; }
-        // DOM에서 이모지 선택 요소를 찾아 값을 추출
-        // 사용자가 특정 이모지를 명시적으로 선택했다면 그 값을 사용
-        const emojiSelect = document.getElementById("v-visitor-emoji");
-        let selectedEmoji;
-        // 사용자가 선택한 값이 있으면 그것을 사용하고, 없으면 1~4 사이의 랜덤 값을 생성하여 할당한다.
-        if (emojiSelect && emojiSelect.value) {
-            selectedEmoji = emojiSelect.value;
-        } else {
-            // Math.random()은 0 이상 1 미만의 난수를 반환. 이를 이용해 1~4 정수 추출.
-            selectedEmoji = String(Math.floor(Math.random() * 4) + 1); }
+            return;}
+        // [수정됨] 화면에서 인풋 요소를 없앴으므로 불필요한 DOM 탐색을 제거.
+        // 버튼을 누르면 무조건 1~4 사이의 정수(랜덤 이모지 번호)를 추출하여 할당한다.
+        const selectedEmoji = String(Math.floor(Math.random() * 4) + 1);
         // 서버로 보낼 데이터를 URLSearchParams 객체를 사용해 Key=value&key=value 형태의 쿼리 스트링 포맷으로 인코딩한다
         const requestData = new URLSearchParams({
             visitorEmoji: selectedEmoji,
-            ownerPk: currentOwnerPk });
+            ownerPk: currentOwnerPk});
         // visitor 라는 앤드포인트로 POST요청을 보낸다. 헤더의 Content-Type을 명시하여 폼 데이터를 표준 방식으로 직렬화하여 서버에 전달
         fetch("visitor", {
             method: "POST",
             headers: {"Content-Type": "application/x-www-form-urlencoded"},
-            body: requestData })
-            // response.ok(HTTP 상태 코드 200-299)데이터 등록이 성공했을 경우
+            body: requestData})
+            // response.ok(HTTP 상태 코드 200-299) 데이터 등록이 성공했을 경우
             .then(response => {
                 if (response.ok) {
                     // 방명록 목록을 1페이지로 갱신
                     fetchVisitors(1);
                     // 최근 방문자 목록 다시 불러옴
                     loadRecentVisitors();
-                // 권한 없음(401)에러를 구체적으로 잡아내어 사용자에게 로그인 유도 알림 띄우기
+                    // 권한 없음(401)에러를 구체적으로 잡아내어 사용자에게 로그인 유도 알림 띄우기
                 } else if (response.status === 401) {
                     alert("로그인이 필요한 서비스입니다.");
                 } else {
-                    // 그 외의 400번대(잘못된 요청),500번대(서버 에러)상태 코드에 대한 포괄적인 실패 알림 처리
-                    alert("등록에 실패했습니다. 서버 오류가 발생했습니다."); }})
+                    // 그 외의 400번대(잘못된 요청), 500번대(서버 에러) 상태 코드에 대한 포괄적인 실패 알림 처리
+                    alert("등록에 실패했습니다. 서버 오류가 발생했습니다.");} })
             // 네트워크 단절 CORS 이슈, 혹은 Json파싱 에러 등 HTTP 응답 자체를 받지 못한 치명적인 예외 상황을 콘솔에 출력
             .catch(error => console.error("Error:", error)); } });
 // =========================================================================
@@ -81,17 +74,10 @@ function fetchVisitors(page) {
         console.error("주인 PK가 없어 목록을 불러올 수 없습니다.");
         return; }
     // 현재 시간을 밀리초 단위의 숫자로 반환받아 변수에 저장
-    const noCache = new Date().getTime();
-    // visitor에 데이터 요청 페이지 번호(p), 홈피 주인(ownerPK), 그리고 앞서 만든 타임스탬프(t)를 덧붙인다
-    // url 끝의 t 값이 매번 달라지므로 브라우저는 항상 새로운 요청으로 인식
-    fetch(`visitor?reqType=json&p=${page}&ownerPk=${currentOwnerPk}&t=${noCache}`, {
+    fetch(`visitor?reqType=json&p=${page}&ownerPk=${currentOwnerPk}`, {
         method: 'GET',
-        headers: {
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0' } })
         // 서버로부터 응답이 도착했을때 HTTP 상태코드(response.ok0)가 200번대(성공)이 아니라면
-        // 강제로 에러를 발생(throw new Error)시켜 아래의 성공 로직을 타지 않고 바로 .catch()블록으로 흐름을 던져버림
+    })        // 강제로 에러를 발생(throw new Error)시켜 아래의 성공 로직을 타지 않고 바로 .catch()블록으로 흐름을 던져버림
         .then(response => {
             if (!response.ok) throw new Error("서버 응답 오류");
             return response.json(); })
