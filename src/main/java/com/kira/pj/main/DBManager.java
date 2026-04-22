@@ -9,8 +9,8 @@ public class DBManager {
     static {
         dataSource = new BasicDataSource();
         dataSource.setUrl("jdbc:oracle:thin:@10.1.82.127:1521:XE");
-        dataSource.setUsername("c##kira");
-        dataSource.setPassword("kira1004");
+        dataSource.setUsername("");
+        dataSource.setPassword("");
         dataSource.setMinIdle(50);        // 최소 유휴 커넥션
         dataSource.setMaxIdle(100);       // 최대 유휴 커넥션
         dataSource.setMaxOpenPreparedStatements(200); // 풀에서 열린 최대 준비된 sql문 개수
